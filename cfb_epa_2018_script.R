@@ -3,7 +3,7 @@
 library(tidyverse)
 library(ggplot2)
 
-work_dir <- "C:/Users/eqa47693/Documents/OSU_Schedule_Project/CFB_Stats"
+work_dir <- "C:/Users/eqa47693/Desktop/CFB/cfb_2018_epa"
 setwd(work_dir)
 
 cfb_regular_play_2018 <- read_csv("cfb_regular_play_18.csv")
