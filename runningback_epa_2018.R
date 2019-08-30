@@ -40,6 +40,10 @@ success_rate_by_rb <- success_rate_by_rb %>%
 
 rb_epa_sr_off <- merge(success_rate_by_rb, rb_mean_epa,
                        by.x = "rushing_player_name", by.y = "rushing_player_name")
+
+rb_epa_sr_off <- rb_epa_sr_off %>%
+    filter(rushing_player_name != "TEAM" & rushing_player_name != "Team")
+
 rb_epa_sr_off %>%
   summarize(mean(mean_epa))
 
@@ -47,10 +51,37 @@ rb_epa_sr_off %>%
   summarize(mean(success_rate))
 
 
-ggplot(data = qb_epa_sr_off, aes(x = success_rate, y = mean_epa)) +
+ggplot(data = rb_epa_sr_off, aes(x = success_rate, y = mean_epa)) +
   geom_point() +
-  geom_point(data = qb_epa_sr_off[148, ], 
+  geom_point(data = rb_epa_sr_off[148, ], 
              aes(x = success_rate, y = mean_epa), color = "firebrick1", size = 3) +
   geom_hline(yintercept= 0, color = "firebrick1") +
-  geom_hline(yintercept = .02705888, linetype = "dashed", color = "black") +
-  geom_vline(xintercept = .4481406, linetype = "dashed", color = "black")
+  geom_hline(yintercept = .0340925, linetype = "dashed", color = "black") +
+  geom_vline(xintercept = .4501733, linetype = "dashed", color = "black")
+
+
+## 13+ yard runs
+exp_rushers <-  cfb_regular_play_2018 %>%
+    group_by(rushing_player_name) %>%
+    filter(rush == 1, yards_gained >= 13, sum(rush) > 50) %>%
+    summarize(n = n())
+
+## stuffs
+stuff_rushers <-  cfb_regular_play_2018 %>%
+  group_by(rushing_player_name) %>%
+  filter(rush == 1, yards_gained <= 0, sum(rush) > 50, 
+         (rushing_player_name != "TEAM" & rushing_player_name != "Team")) %>%
+  summarize(n = n())
+
+
+## stuff vs exp
+stuff_exp_rushers <- merge(stuff_rushers, exp_rushers,
+                           by.x = "rushing_player_name", by.y = "rushing_player_name")
+
+# plot of stuff vs. exp
+ggplot(data = stuff_exp_rushers, aes(x = n.x, y = n.y)) + 
+    geom_point() + 
+    geom_point(data = stuff_exp_rushers[148, ], 
+             aes(x = n.x, y = n.y), color = "firebrick1", size = 3) + 
+    xlab("stuffed runs") + 
+    ylab("explosive runs (13+ yards)")
