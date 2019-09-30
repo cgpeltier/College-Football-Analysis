@@ -255,7 +255,7 @@ national_season_stats <- cfb_regular_play_2019 %>%
 ## skill player stats
 rusher_stats_19 <- cfb_regular_play_2019 %>%
   group_by(offense, rushing_player_name) %>%
-  filter(rushing_player_name != 0 & rushing_player_name != "TEAM " & rush == 1 & (sum(rush) > 25)) %>%
+  filter(rushing_player_name != 0 & rushing_player_name != "TEAM " & rush == 1 & (sum(rush) > 30)) %>%
   summarize(
     avg_epa = mean(EPA, na.rm=TRUE),
     epa_sr = mean(epa_success, na.rm=TRUE),

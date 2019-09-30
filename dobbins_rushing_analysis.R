@@ -111,10 +111,10 @@ Dobbins$defense <- factor(Dobbins$defense, levels = c("17_Indiana", "17_Oklahoma
                                                             "17_Nebraska", "17_Penn State", "17_Iowa", "17_Michigan State", "17_Illinois", "17_Michigan",
                                                             "17_Wisconsin", "18_Oregon State", "18_Rutgers", "18_TCU", "18_Tulane", "18_Penn State", "18_Indiana",
                                                       "18_Minnesota", "18_Purdue", "18_Nebraska", "18_Michigan State", "18_Maryland", "18_Michigan", "18_Northwestern", 
-                                                      "19_Florida Atlantic", "19_Cincinnati", "19_Indiana", "19_Miami (OH)"))
+                                                      "19_Florida Atlantic", "19_Cincinnati", "19_Indiana", "19_Miami (OH)", "19_Nebraska"))
 
 
-## pbp chart
+## epa by game chart
 
 ggplot(data = Dobbins, aes(x = defense, y = mean_epa, group = 1)) + 
     geom_point() +
@@ -125,12 +125,12 @@ ggplot(data = Dobbins, aes(x = defense, y = mean_epa, group = 1)) +
 
 ## all rbs chart
 
-ggplot(data = rusher_stats_19, aes(x = epa_sr_rate, y = avg_epa)) +
+ggplot(data = rusher_stats_19, aes(x = epa_sr, y = avg_epa)) +
   geom_point() +
   geom_smooth(method=lm) +
-  geom_text(x=0.48, y=0.22, label = "J.K. Dobbins") +
+  geom_text(x=0.52, y=0.22, label = "J.K. Dobbins") +
   geom_text(x=0.48, y=0.14, label = "Master Teague") +
-  geom_point(data=rusher_stats_19[99:100, ], aes(x=epa_sr_rate, y=avg_epa), colour="red", size=2)
+  geom_point(data=rusher_stats_19[132:134, ], aes(x=epa_sr, y=avg_epa), colour="red", size=2)
 
 
 
