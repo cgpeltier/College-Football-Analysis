@@ -1,5 +1,4 @@
 library(tidyverse)
-library(ggplot2)
 
 work_dir <- "C:/Users/eqa47693/Desktop/CFB/cfb_2018_epa"
 setwd(work_dir)
@@ -80,6 +79,11 @@ cfb_regular_play_2019$passer_name <- ifelse(cfb_regular_play_2019$play_type == "
                                             is.na(cfb_regular_play_2019$passer_name), cfb_regular_play_2019$passer_name)
 
 
+## remove UW - EWU
+cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
+    filter((offense != "Washington" & defense != "Eastern Washington") | 
+             (offense != "Eastern Washington" & defense != "Washington"))
+
 
 ## box score stats
 box_score_stats<- cfb_regular_play_2019 %>%
@@ -87,41 +91,43 @@ box_score_stats<- cfb_regular_play_2019 %>%
   filter(rush == 1 | pass == 1) %>%
   summarize(
     avg_epa = mean(EPA, na.rm=TRUE),
-    epa_sr_rate = mean(epa_success, na.rm=TRUE),
+    avg_epa_z = NA,
+    epa_sr = mean(epa_success, na.rm=TRUE),
+    epa_sr_z = NA,
     avg_epa_rush = mean(EPA[rush == 1], na.rm=TRUE),
-    epa_sr_rate_rush = mean(epa_success[rush == 1], na.rm=TRUE),
+    avg_epa_rush_z = NA,
+    epa_sr_rush = mean(epa_success[rush == 1], na.rm=TRUE),
+    epa_sr_rush_z = NA,
     short_rush_epa = mean(EPA[short_rush_attempt==1]),
+    short_rush_epa_z = NA,
     avg_epa_pass = mean(EPA[pass == 1], na.rm=TRUE),
-    epa_sr_rate_pass = mean(epa_success[pass == 1], na.rm=TRUE),
+    avg_epa_pass_z = NA,
+    epa_sr_pass = mean(epa_success[pass == 1], na.rm=TRUE),
+    epa_sr_pass_z = NA,
     avg_rz_epa = mean(EPA[rz_play == 1]),
+    avg_rz_epa_z = NA,
     avg_rz_epa_sr = mean(epa_success[rz_play == 1]),
+    avg_rz_epa_sr_z = NA,
     std_down_epa = mean(EPA[std.down==1]),
+    std_down_epa_z = NA,
     pass_down_epa = mean(EPA[pass.down==1]),
-    ypp = mean(yards_gained),
-    plays = n(), 
-    drives = n_distinct(drive_id),
-    overall_sr = mean(success),
-    pass_sr = mean(success[pass==1]),
-    rush_sr = mean(success[rush==1]),
-    ypp_rush = mean(yards_gained[rush==1]),
-    ypp_pass = mean(yards_gained[pass==1]),
-    stuffed_rate = mean(stuffed_run[rush==1]),
-    opp_rate = mean(opp_rate_run[rush==1]),  
-    overall_exp_rate = mean(exp_play),
-    exp_rate_rush = mean(exp_play[rush == 1]),
-    exp_rate_pass = mean(exp_play[pass == 1]),
-    rz_sr = mean(success[rz_play == 1]),
-    so_sr = mean(success[so_play == 1]),
-    short_rush_sr = ((sum(short_rush_success)) / (sum(short_rush_attempt))),
-    run_rate = sum(rush==1) / plays,
-    rz_sr = mean(success[rz_play == 1]),
-    so_sr = mean(success[so_play == 1]),
-    so_total = n_distinct(drive_id[so_play == 1]),
-    touchdown_total = n_distinct(drive_id[play_type == "(Passing Touchdown) | (Rushing Touchdown)"]), 
-    so_rate = so_total / drives, 
-    so_td_rate = touchdown_total / so_total,
-    rz_td_rate = touchdown_total / n_distinct(drive_id[rz_play == 1]),
+    pass_down_epa_z = NA
     ) %>% ungroup()
+
+box_score_stats <- box_score_stats %>% 
+  mutate(
+    avg_epa_z = scale(avg_epa),
+    epa_sr_z = scale(epa_sr),
+    avg_epa_rush_z = scale(avg_epa_rush),
+    epa_sr_rush_z = scale(epa_sr_rush),
+    short_rush_epa_z = scale(short_rush_epa),
+    avg_epa_pass_z = scale(avg_epa_pass),
+    epa_sr_pass_z = scale(epa_sr_pass),
+    avg_rz_epa_z = scale(avg_rz_epa),
+    avg_rz_epa_sr_z = scale(avg_rz_epa_sr),
+    std_down_epa_z = scale(std_down_epa),
+    pass_down_epa_z = scale(pass_down_epa)
+    )
 
 
 ## new all season stats - offense
@@ -130,6 +136,7 @@ season_stats_offense <- cfb_regular_play_2019 %>%
   filter(rush == 1 | pass == 1) %>%
   summarize(
     avg_epa = mean(EPA, na.rm=TRUE),
+    avg_epa_z = scale(avg_epa),
     epa_sr_rate = mean(epa_success, na.rm=TRUE),
     avg_epa_rush = mean(EPA[rush == 1], na.rm=TRUE),
     epa_sr_rate_rush = mean(epa_success[rush == 1], na.rm=TRUE),
@@ -280,6 +287,13 @@ passer_stats_19 <- cfb_regular_play_2019 %>%
     epa_sr = mean(epa_success, na.rm=TRUE)
   ) %>% ungroup()
 
+######################
+## write csvs
+write.csv(national_season_stats, file = "national_season_stats.csv")
+write.csv(box_score_stats, file = "box_score_stats.csv")
+write.csv(season_stats_offense, file = "season_stats_off.csv")
+write.csv(season_stats_defense, file = "season_stats_def.csv")
+
 
 ######################
 
@@ -316,5 +330,4 @@ ggplot(data = receiver_stats_19, aes(x = epa_sr, y = avg_epa)) +
   geom_point(data=receiver_stats_19[507:512, ], aes(x=epa_sr, y=avg_epa), colour="red", size=2)
 
 
-write.csv(national_season_stats, file = "national_season_stats.csv")
-write.csv(box_score_stats, file = "box_score_stats.csv")
+

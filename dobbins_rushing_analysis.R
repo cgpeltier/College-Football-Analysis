@@ -111,7 +111,7 @@ Dobbins$defense <- factor(Dobbins$defense, levels = c("17_Indiana", "17_Oklahoma
                                                             "17_Nebraska", "17_Penn State", "17_Iowa", "17_Michigan State", "17_Illinois", "17_Michigan",
                                                             "17_Wisconsin", "18_Oregon State", "18_Rutgers", "18_TCU", "18_Tulane", "18_Penn State", "18_Indiana",
                                                       "18_Minnesota", "18_Purdue", "18_Nebraska", "18_Michigan State", "18_Maryland", "18_Michigan", "18_Northwestern", 
-                                                      "19_Florida Atlantic", "19_Cincinnati", "19_Indiana", "19_Miami (OH)", "19_Nebraska"))
+                                                      "19_Florida Atlantic", "19_Cincinnati", "19_Indiana", "19_Miami (OH)", "19_Nebraska", "19_Michigan State"))
 
 
 ## epa by game chart
