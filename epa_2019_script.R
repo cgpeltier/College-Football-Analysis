@@ -31,7 +31,7 @@ cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
                           ifelse(yards_gained >= .7* distance & down == 2, 1,
                                  ifelse(yards_gained >= distance & down == 3, 1,
                                         ifelse(yards_gained>= distance & down ==4, 1, 0)))),
-         epa_success = ifelse(EPA >= 0, 1, 0),
+         epa_success = ifelse((rush == 1 | pass == 1) & EPA >= 0, 1, 0),
          short_rush_attempt = ifelse(distance <= 2 & rush == 1, 1, 0),
          short_rush_success = ifelse(distance <= 2 & rush == 1 & yards_gained >= distance, 1, 0),
          std.down = ifelse(down == 2 & distance < 8, 1, 
@@ -81,7 +81,7 @@ cfb_regular_play_2019$passer_name <- ifelse(cfb_regular_play_2019$play_type == "
 
 ## remove UW - EWU
 cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
-    filter((offense != "Washington" & defense != "Eastern Washington") | 
+    filter((offense != "Washington" & defense != "Eastern Washington") & 
              (offense != "Eastern Washington" & defense != "Washington"))
 
 
@@ -132,90 +132,101 @@ box_score_stats <- box_score_stats %>%
 
 ## new all season stats - offense
 season_stats_offense <- cfb_regular_play_2019 %>%
-  group_by(offense) %>%
+  group_by(offense, offense_conference) %>%
   filter(rush == 1 | pass == 1) %>%
-  summarize(
-    avg_epa = mean(EPA, na.rm=TRUE),
-    avg_epa_z = scale(avg_epa),
-    epa_sr_rate = mean(epa_success, na.rm=TRUE),
-    avg_epa_rush = mean(EPA[rush == 1], na.rm=TRUE),
-    epa_sr_rate_rush = mean(epa_success[rush == 1], na.rm=TRUE),
-    short_rush_epa = mean(EPA[short_rush_attempt==1]),
-    avg_epa_pass = mean(EPA[pass == 1], na.rm=TRUE),
-    epa_sr_rate_pass = mean(epa_success[pass == 1], na.rm=TRUE),
-    avg_rz_epa = mean(EPA[rz_play == 1]),
-    avg_rz_epa_sr = mean(epa_success[rz_play == 1]),
-    std_down_epa = mean(EPA[std.down==1]),
-    pass_down_epa = mean(EPA[pass.down==1]),
-    ypp = mean(yards_gained),
-    plays = n(), 
-    drives = n_distinct(drive_id),
-    overall_sr = mean(success),
-    pass_sr = mean(success[pass==1]),
-    rush_sr = mean(success[rush==1]),
-    ypp_rush = mean(yards_gained[rush==1]),
-    ypp_pass = mean(yards_gained[pass==1]),
-    stuffed_rate = mean(stuffed_run[rush==1]),
-    opp_rate = mean(opp_rate_run[rush==1]),  
-    overall_exp_rate = mean(exp_play),
-    exp_rate_rush = mean(exp_play[rush == 1]),
-    exp_rate_pass = mean(exp_play[pass == 1]),
-    rz_sr = mean(success[rz_play == 1]),
-    so_sr = mean(success[so_play == 1]),
-    short_rush_sr = ((sum(short_rush_success)) / (sum(short_rush_attempt))),
-    run_rate = sum(rush==1) / plays,
-    std.down.rush.rte = sum(rush[std.down==1]) / sum(std.down),
-    rz_sr = mean(success[rz_play == 1]),
-    so_sr = mean(success[so_play == 1]),
-    so_total = n_distinct(drive_id[so_play == 1]),
-    touchdown_total = n_distinct(drive_id[play_type == "(Passing Touchdown) | (Rushing Touchdown)"]), 
-    so_rate = so_total / drives, 
-    so_td_rate = touchdown_total / so_total,
-    rz_td_rate = touchdown_total / n_distinct(drive_id[rz_play == 1]),
-  ) %>% ungroup()
+    summarize(
+      plays = n(),
+      std_down_rush_rate = sum(rush[std.down==1]) / sum(std.down),
+      avg_epa = mean(EPA, na.rm=TRUE),
+      avg_epa_z = NA,
+      epa_sr = mean(epa_success, na.rm=TRUE),
+      epa_sr_z = NA,
+      avg_epa_success = mean(EPA[epa_success==1], na.rm=TRUE),
+      avg_epa_rush = mean(EPA[rush == 1], na.rm=TRUE),
+      avg_epa_rush_z = NA,
+      epa_sr_rush = mean(epa_success[rush == 1], na.rm=TRUE),
+      epa_sr_rush_z = NA,
+      short_rush_epa = mean(EPA[short_rush_attempt==1]),
+      short_rush_epa_z = NA,
+      avg_epa_pass = mean(EPA[pass == 1], na.rm=TRUE),
+      avg_epa_pass_z = NA,
+      epa_sr_pass = mean(epa_success[pass == 1], na.rm=TRUE),
+      epa_sr_pass_z = NA,
+      avg_rz_epa = mean(EPA[rz_play == 1]),
+      avg_rz_epa_z = NA,
+      avg_rz_epa_sr = mean(epa_success[rz_play == 1]),
+      avg_rz_epa_sr_z = NA,
+      std_down_epa = mean(EPA[std.down==1]),
+      std_down_epa_z = NA,
+      pass_down_epa = mean(EPA[pass.down==1]),
+      pass_down_epa_z = NA
+    ) %>% ungroup()
 
+
+season_stats_offense <- season_stats_offense %>%
+  mutate(
+    avg_epa_z = scale(avg_epa),
+    epa_sr_z = scale(epa_sr),
+    avg_epa_rush_z = scale(avg_epa_rush),
+    epa_sr_rush_z = scale(epa_sr_rush),
+    short_rush_epa_z = scale(short_rush_epa),
+    avg_epa_pass_z = scale(avg_epa_pass),
+    epa_sr_pass_z = scale(epa_sr_pass),
+    avg_rz_epa_z = scale(avg_rz_epa),
+    avg_rz_epa_sr_z = scale(avg_rz_epa_sr),
+    std_down_epa_z = scale(std_down_epa),
+    pass_down_epa_z = scale(pass_down_epa))
+
+season_stats_offense <- season_stats_offense %>%
+    filter(offense_conference != is.na(offense_conference))
 
 season_stats_defense <- cfb_regular_play_2019 %>%
-  group_by(defense) %>%
+  group_by(defense, defense_conference) %>%
   filter(rush == 1 | pass == 1) %>%
   summarize(
     avg_epa = mean(EPA, na.rm=TRUE),
-    epa_sr_rate = mean(epa_success, na.rm=TRUE),
+    avg_epa_z = NA,
+    epa_sr = mean(epa_success, na.rm=TRUE),
+    epa_sr_z = NA,
+    avg_epa_success = mean(EPA[epa_success==1], na.rm=TRUE),
     avg_epa_rush = mean(EPA[rush == 1], na.rm=TRUE),
-    epa_sr_rate_rush = mean(epa_success[rush == 1], na.rm=TRUE),
+    avg_epa_rush_z = NA,
+    epa_sr_rush = mean(epa_success[rush == 1], na.rm=TRUE),
+    epa_sr_rush_z = NA,
     short_rush_epa = mean(EPA[short_rush_attempt==1]),
+    short_rush_epa_z = NA,
     avg_epa_pass = mean(EPA[pass == 1], na.rm=TRUE),
-    epa_sr_rate_pass = mean(epa_success[pass == 1], na.rm=TRUE),
+    avg_epa_pass_z = NA,
+    epa_sr_pass = mean(epa_success[pass == 1], na.rm=TRUE),
+    epa_sr_pass_z = NA,
     avg_rz_epa = mean(EPA[rz_play == 1]),
+    avg_rz_epa_z = NA,
     avg_rz_epa_sr = mean(epa_success[rz_play == 1]),
+    avg_rz_epa_sr_z = NA,
     std_down_epa = mean(EPA[std.down==1]),
+    std_down_epa_z = NA,
     pass_down_epa = mean(EPA[pass.down==1]),
-    ypp = mean(yards_gained),
-    plays = n(), 
-    drives = n_distinct(drive_id),
-    overall_sr = mean(success),
-    pass_sr = mean(success[pass==1]),
-    rush_sr = mean(success[rush==1]),
-    ypp_rush = mean(yards_gained[rush==1]),
-    ypp_pass = mean(yards_gained[pass==1]),
-    stuffed_rate = mean(stuffed_run[rush==1]),
-    opp_rate = mean(opp_rate_run[rush==1]),  
-    overall_exp_rate = mean(exp_play),
-    exp_rate_rush = mean(exp_play[rush == 1]),
-    exp_rate_pass = mean(exp_play[pass == 1]),
-    rz_sr = mean(success[rz_play == 1]),
-    so_sr = mean(success[so_play == 1]),
-    short_rush_sr = ((sum(short_rush_success)) / (sum(short_rush_attempt))),
-    run_rate = sum(rush==1) / plays,
-    std.down.rush.rte = sum(rush[std.down==1]) / sum(std.down),
-    rz_sr = mean(success[rz_play == 1]),
-    so_sr = mean(success[so_play == 1]),
-    so_total = n_distinct(drive_id[so_play == 1]),
-    touchdown_total = n_distinct(drive_id[play_type == "(Passing Touchdown) | (Rushing Touchdown)"]), 
-    so_rate = so_total / drives, 
-    so_td_rate = touchdown_total / so_total,
-    rz_td_rate = touchdown_total / n_distinct(drive_id[rz_play == 1]),
+    pass_down_epa_z = NA
   ) %>% ungroup()
+
+
+season_stats_defense <- season_stats_defense %>%
+  mutate(
+    avg_epa_z = scale(avg_epa),
+    epa_sr_z = scale(epa_sr),
+    avg_epa_rush_z = scale(avg_epa_rush),
+    epa_sr_rush_z = scale(epa_sr_rush),
+    short_rush_epa_z = scale(short_rush_epa),
+    avg_epa_pass_z = scale(avg_epa_pass),
+    epa_sr_pass_z = scale(epa_sr_pass),
+    avg_rz_epa_z = scale(avg_rz_epa),
+    avg_rz_epa_sr_z = scale(avg_rz_epa_sr),
+    std_down_epa_z = scale(std_down_epa),
+    pass_down_epa_z = scale(pass_down_epa))
+
+season_stats_defense <- season_stats_defense %>%
+  filter(defense_conference != is.na(defense_conference))
+
 
 national_season_stats <- cfb_regular_play_2019 %>%
   filter(rush == 1 | pass == 1) %>%
@@ -230,39 +241,14 @@ national_season_stats <- cfb_regular_play_2019 %>%
     avg_rz_epa = mean(EPA[rz_play == 1]),
     avg_rz_epa_sr = mean(epa_success[rz_play == 1]),
     std_down_epa = mean(EPA[std.down==1]),
-    pass_down_epa = mean(EPA[pass.down==1]),
-    ypp = mean(yards_gained),
-    plays = n(), 
-    drives = n_distinct(drive_id),
-    overall_sr = mean(success),
-    pass_sr = mean(success[pass==1]),
-    rush_sr = mean(success[rush==1]),
-    ypp_rush = mean(yards_gained[rush==1]),
-    ypp_pass = mean(yards_gained[pass==1]),
-    stuffed_rate = mean(stuffed_run[rush==1]),
-    opp_rate = mean(opp_rate_run[rush==1]),  
-    overall_exp_rate = mean(exp_play),
-    exp_rate_rush = mean(exp_play[rush == 1]),
-    exp_rate_pass = mean(exp_play[pass == 1]),
-    rz_sr = mean(success[rz_play == 1]),
-    so_sr = mean(success[so_play == 1]),
-    short_rush_sr = ((sum(short_rush_success)) / (sum(short_rush_attempt))),
-    run_rate = sum(rush==1) / plays,
-    std.down.rush.rte = sum(rush[std.down==1]) / sum(std.down),
-    rz_sr = mean(success[rz_play == 1]),
-    so_sr = mean(success[so_play == 1]),
-    so_total = n_distinct(drive_id[so_play == 1]),
-    touchdown_total = n_distinct(drive_id[play_type == "(Passing Touchdown) | (Rushing Touchdown)"]), 
-    so_rate = so_total / drives, 
-    so_td_rate = touchdown_total / so_total,
-    rz_td_rate = touchdown_total / n_distinct(drive_id[rz_play == 1]),
+    pass_down_epa = mean(EPA[pass.down==1])
   ) %>% ungroup()
 
 
 ## skill player stats
 rusher_stats_19 <- cfb_regular_play_2019 %>%
   group_by(offense, rushing_player_name) %>%
-  filter(rushing_player_name != 0 & rushing_player_name != "TEAM " & rush == 1 & (sum(rush) > 30)) %>%
+  filter(rushing_player_name != 0 & rushing_player_name != "TEAM " & rush == 1 & (sum(rush) > 40)) %>%
   summarize(
     avg_epa = mean(EPA, na.rm=TRUE),
     epa_sr = mean(epa_success, na.rm=TRUE),
@@ -271,7 +257,7 @@ rusher_stats_19 <- cfb_regular_play_2019 %>%
 
 receiver_stats_19 <- cfb_regular_play_2019 %>%
   group_by(offense, receiving_player_name) %>%
-  filter(receiving_player_name != 0 & receiving_player_name != "TEAM" & pass == 1 & sum(pass) >=5) %>%
+  filter(receiving_player_name != 0 & receiving_player_name != "TEAM" & pass == 1 & sum(pass) >=10) %>%
   summarize(
     avg_epa = mean(EPA, na.rm=TRUE),
     epa_sr = mean(epa_success, na.rm=TRUE),
@@ -287,6 +273,20 @@ passer_stats_19 <- cfb_regular_play_2019 %>%
     epa_sr = mean(epa_success, na.rm=TRUE)
   ) %>% ungroup()
 
+
+## avg EPA data frame
+season_off_epa <- season_stats_offense %>%
+    select(1,2,5) %>%
+    rename(team = "offense")
+season_def_epa <- season_stats_defense %>%
+  select(1:3) %>%
+  rename(team = "defense")
+
+
+season_epa <- season_off_epa %>%
+    full_join(season_def_epa, by = "team") %>%
+    rename(avg_epa_off = avg_epa.x, avg_epa_def = avg_epa.y) 
+
 ######################
 ## write csvs
 write.csv(national_season_stats, file = "national_season_stats.csv")
@@ -294,40 +294,91 @@ write.csv(box_score_stats, file = "box_score_stats.csv")
 write.csv(season_stats_offense, file = "season_stats_off.csv")
 write.csv(season_stats_defense, file = "season_stats_def.csv")
 
+######################
+## OSU
+osu_off <- season_stats_offense %>%
+    filter(offense == "Ohio State")
+write.csv(osu_off, file = "osu_off_epa.csv")
+
+osu_def <- season_stats_defense %>%
+  filter(defense == "Ohio State")
+write.csv(osu_def, file = "osu_def_epa.csv")
+
 
 ######################
+## logos
+## logos regex - \\/((?i)\\w+\\s{0,1}\\w+\\s{0,1}\\w+\\s{0,1}\\({0,1}\\w+\\){0,1}).png -- needs something to capture A&M
+
+library(ggimage)
+logos_list <- list.files("C:/Users/eqa47693/Desktop/CFB/logos", pattern = "*.png", full.names = TRUE)
+logos_list_df <- as.data.frame(logos_list)
+logo_team <- str_split(logos_list_df$logos_list, "C:/Users/eqa47693/Desktop/CFB/logos/", simplify = TRUE)
+logo_team <- as_tibble(logo_team)
+logo_team <- logo_team[,2]
+logo_team <- logo_team %>% 
+  mutate(team = str_replace(V2, ".png", ""))
+logo_team <- logo_team[,2]
+logo_team <- cbind(logo_team, logos_list_df)
 
 ## chart comparing qbs
+passer_stats_19 <- passer_stats_19 %>%
+    rename(team = offense)
+passer_stats_19 <- passer_stats_19 %>%
+  left_join(logo_team, by = "team")
+
 ggplot(data = passer_stats_19, aes(x = epa_sr, y = avg_epa)) +
     geom_point() +
     geom_smooth(method=lm) +
-    geom_text(x=0.58, y=0.54, label = "Justin Fields") +
-    geom_text(x=0.44, y=0.14, label = "Adrian Martinez") +
-    geom_point(data=passer_stats_19[102, ], aes(x=epa_sr, y=avg_epa), colour="red", size=2) +
-    geom_point(data=passer_stats_19[87, ], aes(x=epa_sr, y=avg_epa), colour="red", size=2)
+    geom_image(aes(image = logos_list), size = .03, by = "width", asp = 1.8)
 
 ## chart comparing rbs
-ggplot(data = passer_stats_19, aes(x = epa_sr, y = avg_epa)) +
+rusher_stats_19 <- rusher_stats_19 %>%
+    rename(team = offense) %>%
+    left_join(logo_team, by = "team")
+
+ggplot(data = rusher_stats_19, aes(x = epa_sr, y = avg_epa)) +
   geom_point() +
   geom_smooth(method=lm) +
-  geom_text(x=0.5, y=0.22, label = "J.K. Dobbins") +
-  geom_text(x=0.48, y=0.13, label = "Master Teague III") +
-  geom_text(x=0.47, y=-.02, label = "Adrian Martinez") +
-  geom_text(x=0.34, y=-.15, label = "Dedrick Mills") +
-  geom_text(x=0.46, y=0.26, label = "Maurice Washington") +
-  geom_text(x=0.44, y=-.13, label = "Wan'Dale Robinson") +
-  geom_point(data=rusher_stats_19[138:139, ], aes(x=epa_sr, y=avg_epa), colour="red", size=2) +
-  geom_point(data=rusher_stats_19[117:120, ], aes(x=epa_sr, y=avg_epa), colour="red", size=2)
+  geom_image(aes(image = logos_list), size = .03, by = "width", asp = 1.8)
 
 
 ## chart comparing wrs
 ggplot(data = receiver_stats_19, aes(x = epa_sr, y = avg_epa)) +
   geom_point() +
   geom_smooth(method=lm) +
-  geom_text(x=0.55, y=1.2, label = "Maurice Washington", colour = "red") +
-  geom_text(x=0.58, y=.35, label = "Wan'Dale Robinson", colour = "red") +
-  geom_text(x=0.64, y=0.83, label = "JD Spielman", colour = "red") +
   geom_point(data=receiver_stats_19[507:512, ], aes(x=epa_sr, y=avg_epa), colour="red", size=2)
+
+
+## density plot 
+season_epa_gather <- season_epa %>%
+    gather(key = "off_def", value = avg_epa, avg_epa_off, avg_epa_def)
+
+ggplot(data = season_epa_gather, aes(x = avg_epa, fill = off_def)) +
+    geom_density(alpha = 0.5) +
+    geom_vline(xintercept = 0.3090757, linetype = "dashed") +
+    geom_vline(xintercept = -0.3593487, linetype = "dashed")
+
+
+## team offense vs defense
+season_epa <- season_epa %>%
+    left_join(logo_team, by = "team")
+
+ggplot(data = season_epa, aes(x = avg_epa_off, y = avg_epa_def)) +
+    geom_point() + 
+    geom_image(aes(image = logos_list), size = .03, by = "width", asp = 1.8) +
+    xlab("Offensive EPA per play") +
+    ylab("Defensive EPA per play")
+
+## success x avg epa 
+season_stats_offense <- season_stats_offense %>%
+    rename(team = offense) %>%
+    left_join(logo_team, by = "team")
+
+ggplot(data = season_stats_offense, aes(x = epa_sr, y = avg_epa_success)) +
+    geom_point() + 
+    geom_image(aes(image = logos_list), size = .03, by = "width", asp = 1.8) +
+    xlab("Offensive EPA success rate") +
+    ylab("EPA per successful play")
 
 
 

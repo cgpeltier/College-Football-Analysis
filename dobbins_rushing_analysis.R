@@ -115,7 +115,6 @@ Dobbins$defense <- factor(Dobbins$defense, levels = c("17_Indiana", "17_Oklahoma
 
 
 ## epa by game chart
-
 ggplot(data = Dobbins, aes(x = defense, y = mean_epa, group = 1)) + 
     geom_point() +
     geom_line() + 
@@ -124,7 +123,6 @@ ggplot(data = Dobbins, aes(x = defense, y = mean_epa, group = 1)) +
 
 
 ## all rbs chart
-
 ggplot(data = rusher_stats_19, aes(x = epa_sr, y = avg_epa)) +
   geom_point() +
   geom_smooth(method=lm) +
