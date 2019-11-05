@@ -92,41 +92,63 @@ box_score_stats<- cfb_regular_play_2019 %>%
   summarize(
     avg_epa = mean(EPA, na.rm=TRUE),
     avg_epa_z = NA,
+    avg_epa_p = NA,
     epa_sr = mean(epa_success, na.rm=TRUE),
     epa_sr_z = NA,
+    epa_sr_p = NA,
     avg_epa_rush = mean(EPA[rush == 1], na.rm=TRUE),
     avg_epa_rush_z = NA,
+    avg_epa_rush_p = NA,
     epa_sr_rush = mean(epa_success[rush == 1], na.rm=TRUE),
     epa_sr_rush_z = NA,
+    epa_sr_rush_p = NA,
     short_rush_epa = mean(EPA[short_rush_attempt==1]),
     short_rush_epa_z = NA,
+    short_rush_epa_p = NA,
     avg_epa_pass = mean(EPA[pass == 1], na.rm=TRUE),
     avg_epa_pass_z = NA,
+    avg_epa_pass_p = NA,
     epa_sr_pass = mean(epa_success[pass == 1], na.rm=TRUE),
     epa_sr_pass_z = NA,
+    epa_sr_pass_p = NA,
     avg_rz_epa = mean(EPA[rz_play == 1]),
     avg_rz_epa_z = NA,
+    avg_rz_epa_p = NA,
     avg_rz_epa_sr = mean(epa_success[rz_play == 1]),
     avg_rz_epa_sr_z = NA,
+    avg_rz_epa_sr_p = NA,
     std_down_epa = mean(EPA[std.down==1]),
     std_down_epa_z = NA,
+    std_down_epa_p = NA,
     pass_down_epa = mean(EPA[pass.down==1]),
-    pass_down_epa_z = NA
+    pass_down_epa_z = NA,
+    pass_down_epa_p = NA
     ) %>% ungroup()
 
 box_score_stats <- box_score_stats %>% 
   mutate(
     avg_epa_z = scale(avg_epa),
+    avg_epa_p = pnorm(avg_epa_z),
     epa_sr_z = scale(epa_sr),
+    epa_sr_p = pnorm(epa_sr_z),
     avg_epa_rush_z = scale(avg_epa_rush),
+    avg_epa_rush_p = pnorm(avg_epa_rush_z),
     epa_sr_rush_z = scale(epa_sr_rush),
+    epa_sr_rush_p = pnorm(epa_sr_rush_z),
     short_rush_epa_z = scale(short_rush_epa),
+    short_rush_epa_p = pnorm(short_rush_epa_z),
     avg_epa_pass_z = scale(avg_epa_pass),
+    avg_epa_pass_p = pnorm(avg_epa_pass_z),
     epa_sr_pass_z = scale(epa_sr_pass),
+    epa_sr_pass_p = pnorm(epa_sr_pass_z),
     avg_rz_epa_z = scale(avg_rz_epa),
+    avg_rz_epa_p = pnorm(avg_rz_epa_z),
     avg_rz_epa_sr_z = scale(avg_rz_epa_sr),
+    avg_rz_epa_sr_p = pnorm(avg_rz_epa_sr_z),
     std_down_epa_z = scale(std_down_epa),
-    pass_down_epa_z = scale(pass_down_epa)
+    std_down_epa_p = pnorm(std_down_epa_z),
+    pass_down_epa_z = scale(pass_down_epa),
+    pass_down_epa_p = pnorm(pass_down_epa_z)
     )
 
 
@@ -135,99 +157,144 @@ season_stats_offense <- cfb_regular_play_2019 %>%
   group_by(offense, offense_conference) %>%
   filter(rush == 1 | pass == 1) %>%
     summarize(
-      plays = n(),
-      std_down_rush_rate = sum(rush[std.down==1]) / sum(std.down),
       avg_epa = mean(EPA, na.rm=TRUE),
       avg_epa_z = NA,
+      avg_epa_p = NA,
       epa_sr = mean(epa_success, na.rm=TRUE),
       epa_sr_z = NA,
-      avg_epa_success = mean(EPA[epa_success==1], na.rm=TRUE),
+      epa_sr_p = NA,
+      avg_epa_success = mean(EPA[epa_success==1]),
       avg_epa_rush = mean(EPA[rush == 1], na.rm=TRUE),
       avg_epa_rush_z = NA,
+      avg_epa_rush_p = NA,
       epa_sr_rush = mean(epa_success[rush == 1], na.rm=TRUE),
       epa_sr_rush_z = NA,
+      epa_sr_rush_p = NA,
       short_rush_epa = mean(EPA[short_rush_attempt==1]),
       short_rush_epa_z = NA,
+      short_rush_epa_p = NA,
       avg_epa_pass = mean(EPA[pass == 1], na.rm=TRUE),
       avg_epa_pass_z = NA,
+      avg_epa_pass_p = NA,
       epa_sr_pass = mean(epa_success[pass == 1], na.rm=TRUE),
       epa_sr_pass_z = NA,
+      epa_sr_pass_p = NA,
       avg_rz_epa = mean(EPA[rz_play == 1]),
       avg_rz_epa_z = NA,
+      avg_rz_epa_p = NA,
       avg_rz_epa_sr = mean(epa_success[rz_play == 1]),
       avg_rz_epa_sr_z = NA,
+      avg_rz_epa_sr_p = NA,
       std_down_epa = mean(EPA[std.down==1]),
       std_down_epa_z = NA,
+      std_down_epa_p = NA,
       pass_down_epa = mean(EPA[pass.down==1]),
-      pass_down_epa_z = NA
+      pass_down_epa_z = NA,
+      pass_down_epa_p = NA
     ) %>% ungroup()
 
 
 season_stats_offense <- season_stats_offense %>%
   mutate(
     avg_epa_z = scale(avg_epa),
+    avg_epa_p = pnorm(avg_epa_z),
     epa_sr_z = scale(epa_sr),
+    epa_sr_p = pnorm(epa_sr_z),
     avg_epa_rush_z = scale(avg_epa_rush),
+    avg_epa_rush_p = pnorm(avg_epa_rush_z),
     epa_sr_rush_z = scale(epa_sr_rush),
+    epa_sr_rush_p = pnorm(epa_sr_rush_z),
     short_rush_epa_z = scale(short_rush_epa),
+    short_rush_epa_p = pnorm(short_rush_epa_z),
     avg_epa_pass_z = scale(avg_epa_pass),
+    avg_epa_pass_p = pnorm(avg_epa_pass_z),
     epa_sr_pass_z = scale(epa_sr_pass),
+    epa_sr_pass_p = pnorm(epa_sr_pass_z),
     avg_rz_epa_z = scale(avg_rz_epa),
+    avg_rz_epa_p = pnorm(avg_rz_epa_z),
     avg_rz_epa_sr_z = scale(avg_rz_epa_sr),
+    avg_rz_epa_sr_p = pnorm(avg_rz_epa_sr_z),
     std_down_epa_z = scale(std_down_epa),
-    pass_down_epa_z = scale(pass_down_epa))
+    std_down_epa_p = pnorm(std_down_epa_z),
+    pass_down_epa_z = scale(pass_down_epa),
+    pass_down_epa_p = pnorm(pass_down_epa_z)
+  )
 
 season_stats_offense <- season_stats_offense %>%
     filter(offense_conference != is.na(offense_conference))
 
+
+## season stats - defense
 season_stats_defense <- cfb_regular_play_2019 %>%
   group_by(defense, defense_conference) %>%
   filter(rush == 1 | pass == 1) %>%
   summarize(
     avg_epa = mean(EPA, na.rm=TRUE),
     avg_epa_z = NA,
+    avg_epa_p = NA,
     epa_sr = mean(epa_success, na.rm=TRUE),
     epa_sr_z = NA,
-    avg_epa_success = mean(EPA[epa_success==1], na.rm=TRUE),
+    epa_sr_p = NA,
     avg_epa_rush = mean(EPA[rush == 1], na.rm=TRUE),
     avg_epa_rush_z = NA,
+    avg_epa_rush_p = NA,
     epa_sr_rush = mean(epa_success[rush == 1], na.rm=TRUE),
     epa_sr_rush_z = NA,
+    epa_sr_rush_p = NA,
     short_rush_epa = mean(EPA[short_rush_attempt==1]),
     short_rush_epa_z = NA,
+    short_rush_epa_p = NA,
     avg_epa_pass = mean(EPA[pass == 1], na.rm=TRUE),
     avg_epa_pass_z = NA,
+    avg_epa_pass_p = NA,
     epa_sr_pass = mean(epa_success[pass == 1], na.rm=TRUE),
     epa_sr_pass_z = NA,
+    epa_sr_pass_p = NA,
     avg_rz_epa = mean(EPA[rz_play == 1]),
     avg_rz_epa_z = NA,
+    avg_rz_epa_p = NA,
     avg_rz_epa_sr = mean(epa_success[rz_play == 1]),
     avg_rz_epa_sr_z = NA,
+    avg_rz_epa_sr_p = NA,
     std_down_epa = mean(EPA[std.down==1]),
     std_down_epa_z = NA,
+    std_down_epa_p = NA,
     pass_down_epa = mean(EPA[pass.down==1]),
-    pass_down_epa_z = NA
+    pass_down_epa_z = NA,
+    pass_down_epa_p = NA
   ) %>% ungroup()
 
 
 season_stats_defense <- season_stats_defense %>%
   mutate(
     avg_epa_z = scale(avg_epa),
+    avg_epa_p = pnorm(avg_epa_z),
     epa_sr_z = scale(epa_sr),
+    epa_sr_p = pnorm(epa_sr_z),
     avg_epa_rush_z = scale(avg_epa_rush),
+    avg_epa_rush_p = pnorm(avg_epa_rush_z),
     epa_sr_rush_z = scale(epa_sr_rush),
+    epa_sr_rush_p = pnorm(epa_sr_rush_z),
     short_rush_epa_z = scale(short_rush_epa),
+    short_rush_epa_p = pnorm(short_rush_epa_z),
     avg_epa_pass_z = scale(avg_epa_pass),
+    avg_epa_pass_p = pnorm(avg_epa_pass_z),
     epa_sr_pass_z = scale(epa_sr_pass),
+    epa_sr_pass_p = pnorm(epa_sr_pass_z),
     avg_rz_epa_z = scale(avg_rz_epa),
+    avg_rz_epa_p = pnorm(avg_rz_epa_z),
     avg_rz_epa_sr_z = scale(avg_rz_epa_sr),
+    avg_rz_epa_sr_p = pnorm(avg_rz_epa_sr_z),
     std_down_epa_z = scale(std_down_epa),
-    pass_down_epa_z = scale(pass_down_epa))
+    std_down_epa_p = pnorm(std_down_epa_z),
+    pass_down_epa_z = scale(pass_down_epa),
+    pass_down_epa_p = pnorm(pass_down_epa_z)
+  )
 
 season_stats_defense <- season_stats_defense %>%
   filter(defense_conference != is.na(defense_conference))
 
-
+## national averages
 national_season_stats <- cfb_regular_play_2019 %>%
   filter(rush == 1 | pass == 1) %>%
   summarize(
@@ -282,7 +349,6 @@ season_def_epa <- season_stats_defense %>%
   select(1:3) %>%
   rename(team = "defense")
 
-
 season_epa <- season_off_epa %>%
     full_join(season_def_epa, by = "team") %>%
     rename(avg_epa_off = avg_epa.x, avg_epa_def = avg_epa.y) 
@@ -294,15 +360,6 @@ write.csv(box_score_stats, file = "box_score_stats.csv")
 write.csv(season_stats_offense, file = "season_stats_off.csv")
 write.csv(season_stats_defense, file = "season_stats_def.csv")
 
-######################
-## OSU
-osu_off <- season_stats_offense %>%
-    filter(offense == "Ohio State")
-write.csv(osu_off, file = "osu_off_epa.csv")
-
-osu_def <- season_stats_defense %>%
-  filter(defense == "Ohio State")
-write.csv(osu_def, file = "osu_def_epa.csv")
 
 
 

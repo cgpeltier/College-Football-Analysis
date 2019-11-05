@@ -1,34 +1,4 @@
-######################
-## logos
-## logos regex - \\/((?i)\\w+\\s{0,1}\\w+\\s{0,1}\\w+\\s{0,1}\\({0,1}\\w+\\){0,1}).png -- needs something to capture A&M
-
-library(ggimage)
-logos_list <- list.files("C:/Users/eqa47693/Desktop/CFB/logos", pattern = "*.png", full.names = TRUE)
-logos_list_df <- as.data.frame(logos_list)
-logo_team <- str_split(logos_list_df$logos_list, "C:/Users/eqa47693/Desktop/CFB/logos/", simplify = TRUE)
-logo_team <- as_tibble(logo_team)
-logo_team <- logo_team[,2]
-logo_team <- logo_team %>% 
-  mutate(team = str_replace(V2, ".png", ""))
-logo_team <- logo_team[,2]
-logo_team <- cbind(logo_team, logos_list_df)
-
-## chart comparing qbs
-passer_stats_19 <- passer_stats_19 %>%
-  rename(team = offense)
-passer_stats_19 <- passer_stats_19 %>%
-  left_join(logo_team, by = "team")
-
-ggplot(data = passer_stats_19, aes(x = epa_sr, y = avg_epa)) +
-  geom_point() +
-  geom_smooth(method=lm) +
-  geom_image(aes(image = logos_list), size = .03, by = "width", asp = 1.8)
-
-## chart comparing rbs
-rusher_stats_19 <- rusher_stats_19 %>%
-  rename(team = offense) %>%
-  left_join(logo_team, by = "team")
-
+## chart comparing rbs -- may need to combine w/ logos
 ggplot(data = rusher_stats_19, aes(x = epa_sr, y = avg_epa)) +
   geom_point() +
   geom_smooth(method=lm) +
