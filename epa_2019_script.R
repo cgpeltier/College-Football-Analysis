@@ -9,12 +9,8 @@ cfb_regular_play_2019 <- read_csv("cfb_regular_play_19.csv")
 
 ## new play type and successful play variables
 cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
-  mutate(adj_yd_line = ifelse(offense == home_team & period == (1 | 2), yard_line, 
-                            ifelse(offense == away & period == (1 | 2), (100-yard_line),
-                            ifelse(offense == home_team & period == (3 | 4), (100-yard_line),
-                            ifelse(offense == away & period ==(3 | 4), yard_line, 0)))),
-         rz_play = ifelse((adj_yd_line <= 20), 1, 0), 
-         so_play = ifelse((adj_yd_line <= 40 | play_type == "(Passing Touchdown) | (Rushing Touchdown"), 1, 0),
+  mutate(rz_play = ifelse((adjusted_yardline <= 20), 1, 0), 
+         so_play = ifelse((adjusted_yardline <= 40 | play_type == "(Passing Touchdown) | (Rushing Touchdown"), 1, 0),
          pass = if_else(play_type == "Pass Reception" | play_type == "Passing Touchdown" |
                           play_type == "Sack" | play_type == "Pass Interception Return" |
                           play_type == "Pass Incompletion" | play_type == "Sack Touchdown" |
@@ -34,13 +30,14 @@ cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
          epa_success = ifelse((rush == 1 | pass == 1) & EPA >= 0, 1, 0),
          short_rush_attempt = ifelse(distance <= 2 & rush == 1, 1, 0),
          short_rush_success = ifelse(distance <= 2 & rush == 1 & yards_gained >= distance, 1, 0),
-         std.down = ifelse(down == 2 & distance < 8, 1, 
+         std.down = ifelse(down == 1, 1,
+                        ifelse(down == 2 & distance < 8, 1, 
                            ifelse(down == 3 & distance < 5, 1,
-                                  ifelse(down == 4 & distance < 5, 1, 0))),
+                                  ifelse(down == 4 & distance < 5, 1, 0)))),
          pass.down = ifelse(down == 2 & distance > 8, 1, 
                             ifelse(down == 3 & distance > 5, 1, 
                                    ifelse(down == 4 & distance > 5, 1, 0)))
-  )
+)
   
 
 
@@ -102,7 +99,7 @@ box_score_stats<- cfb_regular_play_2019 %>%
     epa_sr_rush = mean(epa_success[rush == 1], na.rm=TRUE),
     epa_sr_rush_z = NA,
     epa_sr_rush_p = NA,
-    short_rush_epa = mean(EPA[short_rush_attempt==1]),
+    short_rush_epa = mean(epa_success[short_rush_attempt==1]),
     short_rush_epa_z = NA,
     short_rush_epa_p = NA,
     avg_epa_pass = mean(EPA[pass == 1], na.rm=TRUE),
@@ -170,7 +167,7 @@ season_stats_offense <- cfb_regular_play_2019 %>%
       epa_sr_rush = mean(epa_success[rush == 1], na.rm=TRUE),
       epa_sr_rush_z = NA,
       epa_sr_rush_p = NA,
-      short_rush_epa = mean(EPA[short_rush_attempt==1]),
+      short_rush_epa = mean(epa_success[short_rush_attempt==1]),
       short_rush_epa_z = NA,
       short_rush_epa_p = NA,
       avg_epa_pass = mean(EPA[pass == 1], na.rm=TRUE),
@@ -241,7 +238,7 @@ season_stats_defense <- cfb_regular_play_2019 %>%
     epa_sr_rush = mean(epa_success[rush == 1], na.rm=TRUE),
     epa_sr_rush_z = NA,
     epa_sr_rush_p = NA,
-    short_rush_epa = mean(EPA[short_rush_attempt==1]),
+    short_rush_epa = mean(epa_success[short_rush_attempt==1]),
     short_rush_epa_z = NA,
     short_rush_epa_p = NA,
     avg_epa_pass = mean(EPA[pass == 1], na.rm=TRUE),
@@ -315,7 +312,7 @@ national_season_stats <- cfb_regular_play_2019 %>%
 ## skill player stats
 rusher_stats_19 <- cfb_regular_play_2019 %>%
   group_by(offense, rushing_player_name) %>%
-  filter(rushing_player_name != 0 & rushing_player_name != "TEAM " & rush == 1 & (sum(rush) > 40)) %>%
+  filter(rushing_player_name != 0 & rushing_player_name != "TEAM " & rush == 1 & (sum(rush) > 0)) %>%
   summarize(
     avg_epa = mean(EPA, na.rm=TRUE),
     epa_sr = mean(epa_success, na.rm=TRUE),

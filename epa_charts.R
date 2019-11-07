@@ -1,4 +1,10 @@
+library(ggimage)
+
 ## chart comparing rbs -- may need to combine w/ logos
+rusher_stats_19 <- rusher_stats_19 %>%
+  rename(team = offense) %>%
+  left_join(logo_team, by = "team")
+
 ggplot(data = rusher_stats_19, aes(x = epa_sr, y = avg_epa)) +
   geom_point() +
   geom_smooth(method=lm) +
@@ -42,3 +48,23 @@ ggplot(data = season_stats_offense, aes(x = epa_sr, y = avg_epa_success)) +
   geom_image(aes(image = logos_list), size = .03, by = "width", asp = 1.8) +
   xlab("Offensive EPA success rate") +
   ylab("EPA per successful play")
+
+
+
+## off SR vs avg EPA
+ggplot(data=season_stats_offense, aes(x = epa_sr, y = avg_epa)) +
+  geom_point() + 
+  geom_image(aes(image = logos_list), size = .03, by = "width", asp = 1.8) +
+  xlab("EPA success rate") +
+  ylab("EPA per play")
+
+## def SR vs avg EPA
+season_stats_defense <- season_stats_defense %>%
+  rename(team = defense) %>%
+  left_join(logo_team, by = "team")
+
+ggplot(data=season_stats_defense, aes(x = epa_sr, y = avg_epa)) +
+  geom_point() + 
+  geom_image(aes(image = logos_list), size = .03, by = "width", asp = 1.8) +
+  xlab("EPA success rate") +
+  ylab("EPA per play")
