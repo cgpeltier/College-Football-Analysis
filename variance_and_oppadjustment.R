@@ -35,26 +35,57 @@ write.csv(box_variance_def, file = "box_variance_def.csv")
 
 
 ###################################
-
+## offensive opp adjustment -- correct, can't do absolute value 
 box_margin_off <- box_score_stats %>%
-    select(1:5) %>%
+    select(1,2,5) %>%
     inner_join(season_stats_defense, by = "defense") %>%
     select(1:3, 7) %>%
-    rename(off_avg_epa = avg_epa.x,
-           def_season_epa = avg_epa.y)
+    rename(off_avg_epa = avg_epa_p.x,
+           def_season_epa = avg_epa_p.y) %>%
+    mutate(avg_epa_var = off_avg_epa - def_season_epa)
 
-box_margin_off$def_season_epa <- abs(box_margin_off$def_season_epa)
 
-box_margin_off <- box_margin_off %>%
-    mutate(
-        avg_epa_var = off_avg_epa - def_season_epa,
-        avg_epa_per_var = (off_avg_epa - def_season_epa)/def_season_epa
-    )
-box_margin_off_summary <- box_margin__off %>%
+box_margin_off_summary <- box_margin_off %>%
     group_by(offense) %>%
-    summarise(avg_epa_var = mean(avg_epa_var, na.rm = TRUE)) %>%
+    summarise(avg_epa_var = mean(avg_epa_var, na.rm = TRUE))
 
 box_margin_off_summary <- box_margin_off_summary %>%
     inner_join(season_stats_offense, by = "offense") %>%
     select(1,2)
 
+## defensive opp adjustment
+box_margin_def <- box_score_stats %>%
+  select(1,2,5) %>%
+  inner_join(season_stats_offense, by = "offense") %>%
+  select(1:3, 7) %>%
+  rename(def_avg_epa = avg_epa_p.x,
+         off_season_epa = avg_epa_p.y) %>%
+  mutate(avg_epa_var = def_avg_epa - off_season_epa)
+
+box_margin_def_summary <- box_margin_def %>%
+  group_by(defense) %>%
+  summarise(avg_epa_var = mean(avg_epa_var, na.rm = TRUE))
+
+box_margin_def_summary <- box_margin_def_summary %>%
+  inner_join(season_stats_defense, by = "defense") %>%
+  select(1,2)
+
+## combine
+box_margin_off_summary <- box_margin_off_summary %>%
+    rename(off_epa_margin = avg_epa_var, team = offense)
+
+box_margin_def_summary <- box_margin_def_summary %>%
+  rename(def_epa_margin = avg_epa_var, team = defense)
+
+opp_adj_epa <- box_margin_off_summary %>%
+    inner_join(box_margin_def_summary, by = "team") %>%
+    left_join(logo_team, by = "team")
+
+opp_adj_epa$def_epa_margin <- abs(opp_adj_epa$def_epa_margin)
+    
+opp_adj_epa <- opp_adj_epa %>%
+    mutate(total_epa_margin = off_epa_margin + def_epa_margin)
+
+## plot
+ggplot(data = opp_adj_epa, aes(x = off_epa_margin, y = def_epa_margin)) + 
+    geom_image(aes(image = logos_list), size = .03, by = "width", asp = 1.8)

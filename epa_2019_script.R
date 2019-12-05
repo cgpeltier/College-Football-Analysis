@@ -1,8 +1,5 @@
 library(tidyverse)
 
-work_dir <- "C:/Users/eqa47693/Desktop/CFB/cfb_2018_epa"
-setwd(work_dir)
-
 cfb_regular_play_2018 <- read_csv("cfb_regular_play_18.csv")
 cfb_regular_play_2019 <- read_csv("cfb_regular_play_19.csv")
 
@@ -76,14 +73,8 @@ cfb_regular_play_2019$passer_name <- ifelse(cfb_regular_play_2019$play_type == "
                                             is.na(cfb_regular_play_2019$passer_name), cfb_regular_play_2019$passer_name)
 
 
-## remove UW - EWU
-cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
-    filter((offense != "Washington" & defense != "Eastern Washington") & 
-             (offense != "Eastern Washington" & defense != "Washington"))
-
-
 ## box score stats
-box_score_stats<- cfb_regular_play_2019 %>%
+box_score_stats <- cfb_regular_play_2019 %>%
   group_by(offense, defense) %>%
   filter(rush == 1 | pass == 1) %>%
   summarize(
@@ -151,7 +142,7 @@ box_score_stats <- box_score_stats %>%
 
 ## new all season stats - offense
 season_stats_offense <- cfb_regular_play_2019 %>%
-  group_by(offense, offense_conference) %>%
+  group_by(offense) %>%
   filter(rush == 1 | pass == 1) %>%
     summarize(
       avg_epa = mean(EPA, na.rm=TRUE),
@@ -223,7 +214,7 @@ season_stats_offense <- season_stats_offense %>%
 
 ## season stats - defense
 season_stats_defense <- cfb_regular_play_2019 %>%
-  group_by(defense, defense_conference) %>%
+  group_by(defense) %>%
   filter(rush == 1 | pass == 1) %>%
   summarize(
     avg_epa = mean(EPA, na.rm=TRUE),
@@ -340,15 +331,16 @@ passer_stats_19 <- cfb_regular_play_2019 %>%
 
 ## avg EPA data frame
 season_off_epa <- season_stats_offense %>%
-    select(1,2,5) %>%
+    select(1,4,7) %>%
     rename(team = "offense")
 season_def_epa <- season_stats_defense %>%
-  select(1:3) %>%
+  select(1,4,7) %>%
   rename(team = "defense")
 
 season_epa <- season_off_epa %>%
     full_join(season_def_epa, by = "team") %>%
-    rename(avg_epa_off = avg_epa.x, avg_epa_def = avg_epa.y) 
+    rename(avg_epa_p_off = avg_epa_p.x, avg_epa_p_def = avg_epa_p.y) %>%
+    mutate(avg_epa_p_def = 1-avg_epa_p_def)
 
 ######################
 ## write csvs

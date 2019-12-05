@@ -30,13 +30,16 @@ ggplot(data = season_epa_gather, aes(x = avg_epa, fill = off_def)) +
 
 ## team offense vs defense
 season_epa <- season_epa %>%
-  left_join(logo_team, by = "team")
+  left_join(teams_logo, by = "team") %>%
+  filter(logo != is.na(logo))
 
-ggplot(data = season_epa, aes(x = avg_epa_off, y = avg_epa_def)) +
-  geom_point() + 
-  geom_image(aes(image = logos_list), size = .03, by = "width", asp = 1.8) +
+ggplot(data = season_epa, aes(x = avg_epa_p_off, y = avg_epa_p_def)) +
+  geom_image(aes(image = logo), size = .03, by = "width", asp = 1.8) +
   xlab("Offensive EPA per play") +
-  ylab("Defensive EPA per play")
+  ylab("Defensive EPA per play") +
+  labs(caption = "EPA model data from cfbscrapR, play-by-play data from @CFB_Data")
+  ggsave("epa_off_def.png", height = 9/1.2, width = 16/1.2)
+
 
 ## success x avg epa 
 season_stats_offense <- season_stats_offense %>%
@@ -44,10 +47,10 @@ season_stats_offense <- season_stats_offense %>%
   left_join(logo_team, by = "team")
 
 ggplot(data = season_stats_offense, aes(x = epa_sr, y = avg_epa_success)) +
-  geom_point() + 
-  geom_image(aes(image = logos_list), size = .03, by = "width", asp = 1.8) +
-  xlab("Offensive EPA success rate") +
-  ylab("EPA per successful play")
+    geom_image(aes(image = logos_list), size = .03, by = "width", asp = 1.8) +
+    xlab("Offensive EPA success rate") +
+    ylab("EPA per successful play") +
+    labs(caption = "EPA model data from @statowar + 903124S, play-by-play data from @CFB_Data")
 
 
 
