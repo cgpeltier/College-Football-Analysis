@@ -79,7 +79,7 @@ season_df_epa <- season_df_off %>%
 # Note: the file "teams.csv" below is from collegefootballdata.com and includes a list of all FBS teams. 
 # I use it primarily to filter down to only FBS teams. It is located in the "C:/directory location of team logos" below. Update the logo directory on your computer
 # My team logos came from collegefootballdata.com. I will update this with the link after I confirm it is OK to share.
-# Note 2: I have a folder of all team logos, which the code below uses. You could also use the `logo[1]` column in the teams.csv df
+# You could also use the `logo[1]` column in the teams.csv df.
 # The teams.csv file can be queried here: https://collegefootballdata.com/exporter/teams/fbs
 
 library(ggimage)
