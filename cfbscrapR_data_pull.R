@@ -32,3 +32,11 @@ for(i in 1:14){
   df <- data.frame(model)
   season_df <- bind_rows(season_df, df)
 }
+
+season_df <- cfb_regular_play_2019
+
+cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
+  rename(adjusted_yardline = adj_yd_line,
+         offense = offense_play,
+         defense = defense_play)
+

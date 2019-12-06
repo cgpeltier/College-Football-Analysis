@@ -1,8 +1,20 @@
 library(tidyverse)
+library(cfbscrapR)
+library(ggimage)
 
-cfb_regular_play_2018 <- read_csv("cfb_regular_play_18.csv")
-cfb_regular_play_2019 <- read_csv("cfb_regular_play_19.csv")
+##Pull season data from scrapR
+cfb_regular_play_2019 <- data.frame()
+for(i in 1:14){
+  model <- cfb_pbp_data(year = 2019, week = i, epa_wpa = TRUE)
+  df <- data.frame(model)
+  cfb_regular_play_2019 <- bind_rows(cfb_regular_play_2019, df)
+}
 
+
+cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
+  rename(adjusted_yardline = adj_yd_line,
+         offense = offense_play,
+         defense = defense_play)
 
 ## new play type and successful play variables
 cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
@@ -36,6 +48,30 @@ cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
                                    ifelse(down == 4 & distance > 5, 1, 0)))
 )
   
+## Add logos
+logos_list <- list.files("C:/Users/chad.peltier/OneDrive - IHS Markit/Desktop/CFB/logos", pattern = "*.png", full.names = TRUE)
+logos_list_df <- as.data.frame(logos_list)
+logo_team <- str_split(logos_list_df$logos_list, "C:/Users/chad.peltier/OneDrive - IHS Markit/Desktop/CFB/logos", simplify = TRUE)
+logo_team <- as_tibble(logo_team)
+logo_team <- logo_team[,2]
+logo_team <- logo_team %>% 
+    mutate(team = str_replace(V2, ".png", ""))
+logo_team <- logo_team[,2]
+logo_team <- logo_team %>%
+    mutate(team = str_replace(team, "/", ""))
+logo_team <- cbind(logo_team, logos_list_df)
+
+teams <- read_csv("teams.csv")
+teams <- teams %>%
+    rename(team = school)
+
+teams_logo <- logo_team %>%
+    inner_join(teams, by = "team") %>%
+    select(team, logo = logos_list)
+
+
+## add in something to extract player names
+
 
 
 ## make sacked player name  = passing player name
@@ -208,9 +244,11 @@ season_stats_offense <- season_stats_offense %>%
     pass_down_epa_p = pnorm(pass_down_epa_z)
   )
 
-season_stats_offense <- season_stats_offense %>%
-    filter(offense_conference != is.na(offense_conference))
 
+season_stats_offense <- season_stats_offense %>%
+  rename(team = offense) %>%
+  left_join(teams_logo, by = "team") %>%
+  filter(logo != is.na(logo))
 
 ## season stats - defense
 season_stats_defense <- cfb_regular_play_2019 %>%
@@ -279,8 +317,6 @@ season_stats_defense <- season_stats_defense %>%
     pass_down_epa_p = pnorm(pass_down_epa_z)
   )
 
-season_stats_defense <- season_stats_defense %>%
-  filter(defense_conference != is.na(defense_conference))
 
 ## national averages
 national_season_stats <- cfb_regular_play_2019 %>%
@@ -299,6 +335,10 @@ national_season_stats <- cfb_regular_play_2019 %>%
     pass_down_epa = mean(EPA[pass.down==1])
   ) %>% ungroup()
 
+season_stats_defense <- season_stats_defense %>%
+    rename(team = defense) %>%
+    left_join(teams_logo, by = "team") %>%
+    filter(logo != is.na(logo))
 
 ## skill player stats
 rusher_stats_19 <- cfb_regular_play_2019 %>%
@@ -342,10 +382,27 @@ season_epa <- season_off_epa %>%
     rename(avg_epa_p_off = avg_epa_p.x, avg_epa_p_def = avg_epa_p.y) %>%
     mutate(avg_epa_p_def = 1-avg_epa_p_def)
 
+season_epa <- season_epa %>%
+    left_join(teams_logo, by = "team") %>%
+    filter(logo != is.na(logo))
+
 ######################
 ## write csvs
-write.csv(national_season_stats, file = "national_season_stats.csv")
 write.csv(box_score_stats, file = "box_score_stats.csv")
 write.csv(season_stats_offense, file = "season_stats_off.csv")
 write.csv(season_stats_defense, file = "season_stats_def.csv")
+
+
+osu_uw_off <- season_stats_offense %>%
+    filter(team == "Ohio State" | team == "Wisconsin") %>%
+    select(1, ends_with("_p"))
+
+write.csv(osu_uw_off, file = "osu_uw_off.csv")
+
+osu_uw_def <- season_stats_defense %>%
+    filter(team == "Ohio State" | team == "Wisconsin") %>%
+    select(1, ends_with("_p"))
+    
+write.csv(osu_uw_def, file = "osu_uw_def.csv")
+
 
