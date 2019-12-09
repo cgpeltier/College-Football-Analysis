@@ -4,11 +4,13 @@ library(ggimage)
 
 ##Pull season data from scrapR
 cfb_regular_play_2019 <- data.frame()
-for(i in 1:14){
-  model <- cfb_pbp_data(year = 2019, week = i, epa_wpa = TRUE)
+for(i in 1:15){
+  model <- cfb_pbp_data(year = 2019, season_type = "both", week = i, epa_wpa = TRUE)
   df <- data.frame(model)
   cfb_regular_play_2019 <- bind_rows(cfb_regular_play_2019, df)
 }
+
+
 
 
 cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
@@ -371,11 +373,9 @@ passer_stats_19 <- cfb_regular_play_2019 %>%
 
 ## avg EPA data frame
 season_off_epa <- season_stats_offense %>%
-    select(1,4,7) %>%
-    rename(team = "offense")
+    select(1,4,7) 
 season_def_epa <- season_stats_defense %>%
-  select(1,4,7) %>%
-  rename(team = "defense")
+  select(1,4,7) 
 
 season_epa <- season_off_epa %>%
     full_join(season_def_epa, by = "team") %>%
