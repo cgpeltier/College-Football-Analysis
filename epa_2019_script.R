@@ -368,8 +368,8 @@ receiver_stats_19 <- cfb_regular_play_2019 %>%
   )%>% ungroup()
 
 passer_stats_19 <- cfb_regular_play_2019 %>%
-  group_by(offense, passer_player) %>%
-  filter(passer_player != is.na(pass_player) & passer_player != "TEAM" & pass == 1 & sum(pass) > 40) %>%
+  group_by(offense, pass_player) %>%
+  filter(pass_player != is.na(pass_player) & pass_player != "TEAM" & pass == 1 & sum(pass) > 40) %>%
   summarize(
     passes = sum(pass),
     avg_epa = mean(EPA, na.rm=TRUE),
