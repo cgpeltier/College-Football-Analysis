@@ -2,7 +2,7 @@ library(tidyverse)
 library(cfbscrapR)
 library(ggimage)
 
-##Pull season data from scrapR
+##Pull season data from cfbscrapR
 cfb_regular_play_2019 <- data.frame()
 for(i in 1:15){
   model <- cfb_pbp_data(year = 2019, season_type = "both", week = i, epa_wpa = TRUE)
@@ -11,13 +11,11 @@ for(i in 1:15){
 }
 
 
+## Clean data
 cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
   rename(adjusted_yardline = adj_yd_line,
          offense = offense_play,
-         defense = defense_play)
-
-## Clean data
-cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
+         defense = defense_play) %>%
   mutate(rz_play = ifelse((adjusted_yardline <= 20), 1, 0), 
          so_play = ifelse((adjusted_yardline <= 40 | play_type == "(Passing Touchdown) | (Rushing Touchdown"), 1, 0),
          pass = if_else(play_type == "Pass Reception" | play_type == "Passing Touchdown" |
@@ -31,11 +29,6 @@ cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
                          (play_type == "Fumble Recovery (Own)" & str_detect(play_text, "run")), 1, 0),
          stuffed_run = ifelse((rush == 1 & yards_gained <=0), 1, 0),
          opp_rate_run = ifelse((rush == 1 & yards_gained >= 4), 1, 0),
-         exp_play = ifelse((yards_gained >= 13), 1, 0),
-         success = ifelse(yards_gained >= .5* distance & down == 1, 1, 
-                          ifelse(yards_gained >= .7* distance & down == 2, 1,
-                                 ifelse(yards_gained >= distance & down == 3, 1,
-                                        ifelse(yards_gained>= distance & down ==4, 1, 0)))),
          epa_success = ifelse((rush == 1 | pass == 1) & EPA >= 0, 1, 0),
          short_rush_attempt = ifelse(distance <= 2 & rush == 1, 1, 0),
          short_rush_success = ifelse(distance <= 2 & rush == 1 & yards_gained >= distance, 1, 0),
@@ -334,6 +327,10 @@ season_stats_defense <- season_stats_defense %>%
     rz_epa_p = pnorm(rz_epa_z)
   )
 
+season_stats_defense <- season_stats_defense %>%
+    rename(team = defense) %>%
+    left_join(teams_logo, by = "team") %>%
+    filter(logo != is.na(logo))
 
 ## national averages
 national_season_stats <- cfb_regular_play_2019 %>%
@@ -351,11 +348,6 @@ national_season_stats <- cfb_regular_play_2019 %>%
     std_down_epa = mean(EPA[std.down==1]),
     pass_down_epa = mean(EPA[pass.down==1])
   ) %>% ungroup()
-
-season_stats_defense <- season_stats_defense %>%
-    rename(team = defense) %>%
-    left_join(teams_logo, by = "team") %>%
-    filter(logo != is.na(logo))
 
 ## skill player stats
 rusher_stats_19 <- cfb_regular_play_2019 %>%
