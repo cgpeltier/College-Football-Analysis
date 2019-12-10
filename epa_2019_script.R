@@ -42,17 +42,16 @@ cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
 )
   
 ## Add logos
-logos_list <- list.files("C:/Users/chad.peltier/OneDrive - IHS Markit/Desktop/CFB/logos", pattern = "*.png", full.names = TRUE)
-logos_list_df <- as.data.frame(logos_list)
-logo_team <- str_split(logos_list_df$logos_list, "C:/Users/chad.peltier/OneDrive - IHS Markit/Desktop/CFB/logos", simplify = TRUE)
-logo_team <- as_tibble(logo_team)
-logo_team <- logo_team[,2]
+logos_list <- as.data.frame(list.files("C:/Users/chad.peltier/OneDrive - IHS Markit/Desktop/CFB/logos", pattern = "*.png", full.names = TRUE)) 
+colnames(logos_list)[1] <- "logo"
+
+logo_team <- as_tibble(str_split(logos_list$logo, "C:/Users/chad.peltier/OneDrive - IHS Markit/Desktop/CFB/logos", simplify = TRUE))
 logo_team <- logo_team %>% 
-    mutate(team = str_replace(V2, ".png", ""))
-logo_team <- logo_team[,2]
-logo_team <- logo_team %>%
-    mutate(team = str_replace(team, "/", ""))
-logo_team <- cbind(logo_team, logos_list_df)
+    mutate(team = str_replace(V2, ".png", ""),
+           team = str_replace(team, "/", "")) %>%
+    select(team)
+
+logo_team <- cbind(logo_team, logos_list)
 
 teams <- read_csv("teams.csv")
 teams <- teams %>%
@@ -60,7 +59,7 @@ teams <- teams %>%
 
 teams_logo <- logo_team %>%
     inner_join(teams, by = "team") %>%
-    select(team, logo = logos_list)
+    select(team, logo)
 
 
 ## Extract player names
@@ -360,7 +359,7 @@ rusher_stats_19 <- cfb_regular_play_2019 %>%
   )%>% ungroup()
 
 receiver_stats_19 <- cfb_regular_play_2019 %>%
-  group_by(offense, receiving_player_name) %>%
+  group_by(offense, receiver_player) %>%
   filter(receiver_player != is.na(receiver_player) & receiver_player != "TEAM" & pass == 1 & sum(pass) >= 10) %>%
   summarize(
     avg_epa = mean(EPA, na.rm=TRUE),
@@ -390,8 +389,8 @@ season_epa <- season_off_epa %>%
     mutate(avg_epa_p_def = 1-avg_epa_p_def)
 
 season_epa <- season_epa %>%
-    left_join(teams_logo, by = "team") %>%
-    filter(logo != is.na(logo))
+    inner_join(teams_logo, by = "team") %>%
+    rename(epa_sr_p_off = epa_sr_p.x, epa_sr_p_def = epa_sr_p.y)
 
 ######################
 ## write csvs

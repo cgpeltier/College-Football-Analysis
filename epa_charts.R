@@ -30,11 +30,11 @@ ggplot(data = season_epa_gather, aes(x = avg_epa, fill = off_def)) +
 
 ## team offense vs defense
 ggplot(data = season_epa, aes(x = avg_epa_p_off, y = avg_epa_p_def)) +
-  geom_image(aes(image = logo), size = .03, by = "width", asp = 1.8) +
-  xlab("Offensive EPA per play") +
-  ylab("Defensive EPA per play") +
-  labs(caption = "EPA model data from cfbscrapR, play-by-play data from @CFB_Data")
-  ggsave("epa_off_def.png", height = 9/1.2, width = 16/1.2)
+    geom_image(aes(image = logo), size = .03, by = "width", asp = 1.8) +
+    xlab("Offensive EPA per play") +
+    ylab("Defensive EPA per play") +
+    labs(caption = "Chart by Chad Peltier, EPA data from cfbscrapR, PBP data from @CFB_Data")
+    ggsave("epa_off_def.png", height = 9/1.2, width = 16/1.2)
 
 
 ## success x avg epa 
