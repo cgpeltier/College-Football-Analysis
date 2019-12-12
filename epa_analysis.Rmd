@@ -6,7 +6,9 @@ output: html_document
 ---
 This project is intended to take college football play-by-play (PBP) data and produce expected points added (EPA) summaries for individual games (i.e. EPA box scores), season stats for offense and defense, and for skill players. 
 
-EPA allows us to evaluate the magnitude of success for an individual play, and by extension, a player, side of the ball, or entire team. While success rate (another common advanced stat) only looks at the binary question of “was this play successful or not?” based on predefined goals given a particular down and distance, EPA allows you to not only say that a play was good, but also *how* good. Expected points themselves are derived from a statistical model for each down, distance, and field position. If a play does better than expected given the play’s down, distance, and field position, then it will have a positive EPA. You can find [more about EPA here](https://www.advancedfootballanalytics.com/index.php/home/stats/stats-explained/expected-points-and-epa-explained).
+EPA allows us to evaluate the magnitude of success for an individual play, and by extension, a player, side of the ball, or entire team. While success rate (another common advanced stat) only looks at the binary question of “was this play successful or not?” based on predefined goals given a particular down and distance, EPA allows you to not only say that a play was good, but also *how* good. 
+
+Expected points themselves are derived from a statistical model for each down, distance, and field position. If a play does better than expected given the play’s down, distance, and field position, then it will have a positive EPA. You can find [more about EPA here](https://www.advancedfootballanalytics.com/index.php/home/stats/stats-explained/expected-points-and-epa-explained).
 
 ## Loading our dataset
 First, I loaded the three necessary packages and then wrote a simple for loop to create a data frame of PBP EPA data for the entire 2019 college football season. EPA data is courtesy of the cfbscrapR package.
@@ -25,17 +27,20 @@ for(i in 1:15){
 ```
 
 ## Tidying 
-Next we'll need to do some tidying and add a few new variables. These include:
+Next we'll need to do some tidying and add a few new variables. 
 
 First we'll adjust the pre-set rush and pass variables. While there is a "play_type" variable that can be used for most things, that variable has more categories than we want (i.e. more than just rush or pass), including types of touchdowns, turnovers, sacks, safeties and completions/incompletions. So the rush/pass mutations below adjust the rush and pass variables by using stringr::str_detect to check for specific words mentioned in the "play_text" variable. For example, it's not clear whether play_type == "Fumble Recovery (Opponent)" is a rush or a pass, so we can use stringr::str_detect to check for "pass" or "run" to classify it in our new rush/pass variables. 
 
 Second, we'll also add a number of other new variables for things we might want to analyze later, including: stuffed run rate (the rate of runs stopped at or behind the line of scrimmage), opportunity rate (the percentage of rushes that gain 4 or more yards -- i.e. the plays that the offensive line "does its job"), epa_successes (creates a binary good/bad play variable based on whether EPA is positive or negative), short rush attempts/success (running plays with 2 or fewer yards to go), and standard/passing downs (down/distance combinations where a team could theoretically rush or pass, or situations where passing is much more likely). 
+
 ```{r}
 cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
   rename(adjusted_yardline = adj_yd_line,
          offense = offense_play,
          defense = defense_play) %>%
-  mutate(pass = if_else(play_type == "Pass Reception" | play_type == "Passing Touchdown" |
+  mutate(rz_play = ifelse((adjusted_yardline <= 20), 1, 0), 
+         so_play = ifelse((adjusted_yardline <= 40 | play_type == "(Passing Touchdown) | (Rushing Touchdown"), 1, 0),
+         pass = if_else(play_type == "Pass Reception" | play_type == "Passing Touchdown" |
                           play_type == "Sack" | play_type == "Pass Interception Return" |
                           play_type == "Pass Incompletion" | play_type == "Sack Touchdown" |
                           (play_type == "Safety" & str_detect(play_text, "sacked")) |
@@ -44,9 +49,13 @@ cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
          rush = ifelse(play_type == "Rush" | play_type == "Rushing Touchdown" | (play_type == "Safety" & str_detect(play_text, "run")) |
                          (play_type == "Fumble Recovery (Opponent)" & str_detect(play_text, "run")) | 
                          (play_type == "Fumble Recovery (Own)" & str_detect(play_text, "run")), 1, 0),
+         rush_pass = if_else(rush == 1, "rush", 
+                             if_else(pass == 1, "pass", "NA")),
          stuffed_run = ifelse((rush == 1 & yards_gained <=0), 1, 0),
          opp_rate_run = ifelse((rush == 1 & yards_gained >= 4), 1, 0),
-         epa_success = ifelse((rush == 1 | pass == 1) & EPA >= 0.001, 1, 0),
+         epa_success = ifelse((rush == 1 | pass == 1) & EPA >= 0, 1, 0),
+         epa_explosive = if_else((rush == 1 & EPA >= 1.7917221), 1, 
+                                 if_else((pass == 1 & EPA >= 2.4486338), 1, 0)),
          short_rush_attempt = ifelse(distance <= 2 & rush == 1, 1, 0),
          short_rush_success = ifelse(distance <= 2 & rush == 1 & yards_gained >= distance, 1, 0),
          std.down = ifelse(down == 1, 1,
@@ -127,7 +136,7 @@ The percentiles ("summary_stat_p") are particularly helpful here, as they are mu
 
 Finally, below each season summary section we'll join the team logos data frame with the season summary stats data frames to use for charts later on. 
 ```{r}
-## Box score stats
+## box score stats
 box_score_stats <- cfb_regular_play_2019 %>%
   group_by(offense, defense) %>%
   filter(rush == 1 | pass == 1) %>%
@@ -138,6 +147,9 @@ box_score_stats <- cfb_regular_play_2019 %>%
     epa_sr = mean(epa_success, na.rm=TRUE),
     epa_sr_z = NA,
     epa_sr_p = NA,
+    epa_er = mean(epa_explosive, na.rm = TRUE),
+    epa_er_z = NA, 
+    epa_er_p = NA,
     avg_epa_rush = mean(EPA[rush == 1], na.rm=TRUE),
     avg_epa_rush_z = NA,
     avg_epa_rush_p = NA,
@@ -179,6 +191,8 @@ box_score_stats <- box_score_stats %>%
     avg_epa_p = pnorm(avg_epa_z),
     epa_sr_z = scale(epa_sr),
     epa_sr_p = pnorm(epa_sr_z),
+    epa_er_z = scale(epa_er),
+    epa_er_p = pnorm(epa_er_z),
     avg_epa_rush_z = scale(avg_epa_rush),
     avg_epa_rush_p = pnorm(avg_epa_rush_z),
     epa_sr_rush_z = scale(epa_sr_rush),
@@ -204,7 +218,7 @@ box_score_stats <- box_score_stats %>%
     )
 
 
-## Season stats - offense
+## new all season stats - offense
 season_stats_offense <- cfb_regular_play_2019 %>%
   group_by(offense) %>%
   filter(rush == 1 | pass == 1) %>%
@@ -215,7 +229,11 @@ season_stats_offense <- cfb_regular_play_2019 %>%
       epa_sr = mean(epa_success, na.rm=TRUE),
       epa_sr_z = NA,
       epa_sr_p = NA,
+      epa_er = mean(epa_explosive, na.rm = TRUE),
+      epa_er_z = NA, 
+      epa_er_p = NA,
       avg_epa_success = mean(EPA[epa_success==1]),
+      avg_epa_explosive = mean(EPA[epa_explosive==1]),
       avg_epa_rush = mean(EPA[rush == 1], na.rm=TRUE),
       avg_epa_rush_z = NA,
       avg_epa_rush_p = NA,
@@ -258,6 +276,8 @@ season_stats_offense <- season_stats_offense %>%
     avg_epa_p = pnorm(avg_epa_z),
     epa_sr_z = scale(epa_sr),
     epa_sr_p = pnorm(epa_sr_z),
+    epa_er_z = scale(epa_er),
+    epa_er_p = pnorm(epa_er_z),
     avg_epa_rush_z = scale(avg_epa_rush),
     avg_epa_rush_p = pnorm(avg_epa_rush_z),
     epa_sr_rush_z = scale(epa_sr_rush),
@@ -288,7 +308,7 @@ season_stats_offense <- season_stats_offense %>%
   left_join(teams_logo, by = "team") %>%
   filter(logo != is.na(logo))
 
-## Season stats - defense
+## season stats - defense
 season_stats_defense <- cfb_regular_play_2019 %>%
   group_by(defense) %>%
   filter(rush == 1 | pass == 1) %>%
@@ -299,6 +319,11 @@ season_stats_defense <- cfb_regular_play_2019 %>%
     epa_sr = mean(epa_success, na.rm=TRUE),
     epa_sr_z = NA,
     epa_sr_p = NA,
+    epa_er = mean(epa_explosive, na.rm = TRUE),
+    epa_er_z = NA, 
+    epa_er_p = NA,
+    avg_epa_success = mean(EPA[epa_success==1]),
+    avg_epa_explosive = mean(EPA[epa_explosive==1]),
     avg_epa_rush = mean(EPA[rush == 1], na.rm=TRUE),
     avg_epa_rush_z = NA,
     avg_epa_rush_p = NA,
@@ -341,6 +366,8 @@ season_stats_defense <- season_stats_defense %>%
     avg_epa_p = pnorm(avg_epa_z),
     epa_sr_z = scale(epa_sr),
     epa_sr_p = pnorm(epa_sr_z),
+    epa_er_z = scale(epa_er),
+    epa_er_p = pnorm(epa_er_z),
     avg_epa_rush_z = scale(avg_epa_rush),
     avg_epa_rush_p = pnorm(avg_epa_rush_z),
     epa_sr_rush_z = scale(epa_sr_rush),
@@ -432,7 +459,7 @@ ggplot(data = season_epa, aes(x = avg_epa_p_off, y = avg_epa_p_def)) +
     labs(caption = "Chart by Chad Peltier, EPA data from cfbscrapR, PBP data from @CFB_Data") +    ggsave("epa_off_def.png", height = 9/1.2, width = 16/1.2)
 ```
 
-## Viewing the top teams and players by average EPA
+## Top teams and players by average EPA
 A few more things we can do with this data. First, here are the top 5 offenses: 
 ```{r}
 season_epa %>%
@@ -448,7 +475,7 @@ season_epa %>%
     select(team, avg_epa_p_def) %>%
     head(5)
 ```
-The first five offenses fit well with what we would expect based on other sources, such as the SP+ rankings. And while Clemson, Ohio State and Georgia also rank highly in other metrics, San Diego State and UAB rank 17th and 28th respectively in the opponent-adjusted SP+ ratings. That could suggest that opponent-adjusted EPA data would produce different results. 
+The first five offenses fit well with what we would expect based on other sources, such as the SP+ rankings. But for defensive EPA, while Clemson, Ohio State and Georgia also rank highly in other metrics, San Diego State and UAB only rank 17th and 28th respectively in the opponent-adjusted defensive SP+ ratings. That *could* suggest that opponent-adjusted EPA data would produce different results. 
 
 Of course, we can't generalize the effectiveness of average EPA only by the top 5 results, but they are interesting nevertheless! 
 
