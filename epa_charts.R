@@ -99,3 +99,21 @@ ggplot(data=season_offense_test, aes(x=net_epa, y = std_down_rush_rate)) +
               tend to run") +
       facet_wrap(~ quadrant, ncol=4)
     
+
+
+## Visualizing all plays in a season by game
+osu_plays <- cfb_regular_play_2019 %>%
+  filter(!is.na(rush_pass) & offense == "Ohio State") %>%
+  mutate(defense = if_else(game_id == 401132983, "Wisconsin_2", defense))
+
+osu_plays$defense <- factor(osu_plays$defense, levels = c("Florida Atlantic", "Cincinnati", "Indiana",
+                                                          "Miami (OH)", "Nebraska", "Michigan State",
+                                                          "Northwestern", "Wisconsin", "Maryland",
+                                                          "Rutgers", "Penn State", "Michigan",
+                                                          "Wisconsin_2"))
+
+
+ggplot(data = osu_plays, aes(x = defense, y = EPA)) + 
+  geom_boxplot() +
+  geom_jitter(shape = 16, position = position_jitter(0.2)) +
+  ggsave("epa_game_osu.png", height = 9/1.2, width = 16/1.2)

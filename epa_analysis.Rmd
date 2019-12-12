@@ -487,4 +487,27 @@ passer_stats_19 %>%
 ```
 This seems to be a solid list of the top-5 FBS quarterbacks. Jalen Hurts, Justin Fields, and Joe Burrow were three of the four players selected as Heisman Finalists this year. Tua Tagovailoa was on many lists until he got injured. Tanner Morgan is a little surprising in the fourth spot, but has produced a relatively large number of explosive plays for Minnesota. 
 
+## Visualizing all plays per game 
+One final thing we can do is to visualize all plays for a specific team. Below is the EPA for every Ohio State play this season, separated by game, with box plots to show the distribution of EPA:
+
+```{r}
+osu_plays <- cfb_regular_play_2019 %>%
+    filter(!is.na(rush_pass) & offense == "Ohio State") %>%
+    mutate(defense = if_else(game_id == 401132983, "Wisconsin_2", defense))
+
+osu_plays$defense <- factor(osu_plays$defense, levels = c("Florida Atlantic", "Cincinnati", "Indiana",
+                                                      "Miami (OH)", "Nebraska", "Michigan State",
+                                                      "Northwestern", "Wisconsin", "Maryland",
+                                                      "Rutgers", "Penn State", "Michigan",
+                                                      "Wisconsin_2"))
+    
+
+ggplot(data = osu_plays, aes(x = defense, y = EPA)) + 
+    geom_boxplot() +
+    geom_jitter(shape = 16, position = position_jitter(0.2)) +
+ggsave("epa_game_osu.png", height = 9/1.2, width = 16/1.2)
+
+
+```
+
 

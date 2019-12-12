@@ -5,19 +5,21 @@ date: "12/12/2019"
 output: html_document
 ---
 
-One of the early advances in college football analysis was the distinction between efficiency and explosiveness, where efficiency refers to steady progress towards a first down and/or down the field, while explosiveness refers to large "chunk plays". 
+One of the early advances in college football analysis was the distinction between efficiency and explosiveness, where efficiency refers to steady progress towards a first down and/or down the field, while explosiveness refers to the creation of large "chunk plays". Explosive plays might traditionally be defined as plays over a certain distance -- i.e. 15 or 20 yards. 
 
 You can read much more about efficiency and explosiveness through Bill Connelly's [explanation about his SP+ analytics system](https://www.sbnation.com/college-football/2017/10/13/16457830/college-football-advanced-stats-analytics-rankings) and his [deep dive into how explosive plays in football are like three-pointers in basketball](https://www.footballstudyhall.com/2017/8/22/16075050/college-football-big-plays-efficiency-five-factors). 
 
-Expected points added (EPA) is an extremely powerful way to analyze the efficiency and explosiveness of teams and players for two reasons. First, because it quanitifies *how* good a play was in addition to just *whether* a play was good, EPA differentiates between a five-yard gain on third-and-four from the 50-yard line and a 50-yard gain from that midfield. Both plays would be counted as "successful" using the binary "success rate" metric, but EPA would say that the expected points differential between those two plays is approximately 4.1 points. 
+Expected points added (EPA) is an extremely powerful way to analyze efficiency and explosiveness. First, because it quanitifies *how* good a play was in addition to just *whether* a play was good, EPA differentiates between a five-yard gain on third-and-four from the 50-yard line and a 25-yard gain from midfield. Both plays would be counted as "successful" using the binary "success rate" metric, but EPA would say that the expected points differential between those two plays is approximately 1.6 points. 
 
-Essentially, that specific situation -- third-and-four from midfield -- has a expected points value of approximately 1.2 points before the start of the play. If the play goes for a five-yard gain (continuining the drive but still uncertain whether the drive will end in points), the expected points added by that five yard gain is 1.7 points. The new expected points value of your new drive state (first-and-ten from your opponent's 45 yard line) is roughly 2.8 points. However, if you were to complete a long touchdown pass in that same situation -- as Houston's Bryson Smith did against Cincinnati this season -- the EPA from that play is about 5.8 points! Therefore, the higher the EPA for a play, the more explosive the play was relative to expectations based on that play's down, distance to go, and field position. 
+Essentially, that specific situation -- third-and-four from midfield -- has a expected points value of approximately 1.2 points before the start of the play. If the play goes for a five-yard gain (continuining the drive but still uncertain whether the drive will end in points), the expected points added by that five yard gain is 1.7 points. The new expected points value of your new drive state (first-and-ten from your opponent's 45 yard line) is roughly 2.8 points. 
+
+However, if you were to complete a long pass for 25 yards in that same situation -- as Florida's Kyle Trask did to Tyrie Cleveland against Florida State -- the EPA from that play is about 3.3 points. Therefore, the higher the EPA for a play, the more explosive the play was relative to expectations based on that play's down, distance to go, and field position. 
 
 Second, because it is calculated for each individual play, EPA allows us to do any number of more granular analyses. For example, we can calculate average EPA per play (average EPA) or just look at the percentage of plays with a positive EPA (which is essentially a more advanced version of "success rate"). Or we can look at average EPA for individual players, or teams in specific situations (like on third down, or in the red zone, or in "open play" between the 20 yard lines). 
 
-In contrast, other approaches to calculating explosiveness in football often either lack the ability to analyze the magnitude of an explosive play (focusing instead on the *rate* of explosive plays) or aren't based on modeled, or expected, performance. 
+In contrast, other approaches to calculating explosiveness in football often either lack the ability to analyze the magnitude of an explosive play (focusing instead on the *rate* of explosive plays) or aren't based on modeled, or expected, performance. As mentioned above, one common approach is to just look at the percentage of plays that gain a certain number of yards -- sometimes 10, 15, or 20.
 
-For example, the following code calculates the yards_gained variable for the  top quartile (75%) and at the 90%:  
+One way to figure out a yard line cut off point would be to look at the top top quartile or 90% of all yards gained per play. For example, the following code calculates the yards_gained variable for the top quartile (75%) and at 90%:  
 
 ```{r}
 library(tidyverse)
@@ -25,8 +27,7 @@ library(cfbscrapR)
 library(ggimage)
 
 yards_gained <- cfb_regular_play_2019 %>%
-    mutate(rush_pass = if_else(rush == 1, "rush", 
-                               if_else(pass == 1, "pass", "NA"))) %>%
+    mutate(rush_pass = if_else(rush == 1, "rush", if_else(pass == 1, "pass", "NA"))) %>%
     drop_na(rush_pass) %>%
     select(yards_gained, rush_pass)
 
@@ -37,15 +38,17 @@ yards_gained %>%
 
 ```
 
-As shown above, the 90th percentile of rushes went for >=12 yards, while the 90th percentile of passes went for >=20 yards if you just look at yards_gained. As a result, it would be simple to add a variable for "explosive_play" that uses that (somewhat artbitrary!) definition of the 90th percentile of yards_gained: 
+As shown above, the 90th percentile of rushes went for >=12 yards, while the 90th percentile of passes went for >=20 yards. As a result, it would be simple to add a variable for "explosive_play" that uses that (somewhat artbitrary!) definition of the 90th percentile of yards_gained: 
 
+```{r}
 exp_plays <- cfb_regular_play_2019 %>%
     mutate(explosive_play = if_else(rush==1 & yards_gained >=12, 1,
                                     if_else(pass==1 & yards_gained >=20, 1, 0)))
+```
 
-That is interesting in and of itself, but we'll do a little bit of a deeper dive using EPA. 
+That is interesting in and of itself, but we can go deeper using EPA. 
 
-This project will take a closer look at the variation between efficiency and explosiveness for FBS teams during the 2019 college football regular season. It will use the basic EPA summary data created in another one of my projects, "Data Cleaning and Exploratory Analysis of the 2019 College Football Season Using Expected Points Added (EPA) Data." We'll use the tidyverse as well as the cfbscrapR package from that project as well. 
+This project will take a closer look at the variation between efficiency and explosiveness for FBS teams during the 2019 college football regular season. It will use the basic EPA summary data created in another one of my projects, "Data Cleaning and Exploratory Analysis of the 2019 College Football Season Using Expected Points Added (EPA) Data." We'll use the tidyverse as well as the cfbscrapR package from that project. 
 
 ## Team efficiency vs. explosiveness 
 First let's just plot all teams by their efficiency (defined here as EPA success rate, or the percentage of positive EPA rush/pass plays) and their average EPA on the y-axis.
@@ -73,11 +76,10 @@ summary(model)
 
 This shouldn't be much surprise based on the chart above, but EPA success rate is extremely predictive of average EPA per play. Given that the p-value for epa_sr is < 0.001, it is extremely unlikely that the two variables are unrelated. Additionally, the adjusted R-squared suggests that epa_sr explains 91.39% of the variation in avg_epa! 
 
-
 ### Isolating average EPA on only successful plays
-Another interesting thing we can do is to look at efficiency vs. average EPA on only successful plays. This is another way to look at efficiency vs. explosivness, as looking at the average EPA on just successful plays (EPA > 0) narrows the focus on explosiveness by removing bad plays from the average. 
+Another interesting thing we can do is to look at efficiency vs. average EPA on only successful plays. This is another way to look at efficiency vs. explosivness, as looking at the average EPA on just successful plays (EPA > 0) narrows the focus on explosiveness by removing bad plays before we calculate the average EPA per play. 
 
-Another way of thinking about it might be as "isolated explosiveness", because we're isolating the magnitude of positive plays from the rate of positive plays. 
+Another way of thinking about it might be as "isolated explosiveness", because we're isolating the *magnitude* of positive plays separate from the *rate* of positive plays. 
 
 ```{r}
 ggplot(data = season_stats_offense, aes(x = epa_sr, y = avg_epa_success)) +
@@ -88,14 +90,14 @@ ggplot(data = season_stats_offense, aes(x = epa_sr, y = avg_epa_success)) +
     ggsave("epa_success_avg_epa.png", height = 9/1.2, width = 16/1.2)
 ```
 
-This view shows the variation between teams' explosiveness more clearly than the first chart. The order of teams on the x-axis is the same as the first chart, but this chart shows wider variation between teams' explosiveness as measured by EPA per successful play. 
+This view shows the variation between teams' explosiveness more clearly than the first chart. The order of teams on the x-axis is the same as in the first chart, but this chart shows wider variation between teams' explosiveness as measured by EPA per successful play. 
 
 This chart (and the next) help us see which teams only get the necessary yardage vs. which teams get way more than the necessary yardage, given their down, distance, and field position. For example, Georgia is 20th in the country in EPA success rate, but they're *second-to-last* in the country in EPA per successful play! 
 
-Further, just looking at playoff teams, Ohio State and LSU tend are two of the most efficient three teams in the country, but Oklahoma is more explosive, and Clemson is even more explosive -- althought hey are also less efficient than the other three. 
+Further, just looking at playoff teams, Ohio State and LSU are two of the three most efficient teams in the country, but Oklahoma is more explosive. Clemson is even more explosive -- although they are also less efficient than the other three. 
 
 ## Explosiveness rate using EPA
-Just like we did above the yards_gained variable, we can also calculate the 90th percentile EPAs for rushes and passes in order to create a new variable showing explosiveness rate. 
+Just like we did above the yards_gained variable, we can also calculate the 90th percentile EPAs for rushes and passes in order to create a new variable showing explosiveness rate. This will specify an EPA threshold for a play to be considered explosive, then see how often on average a team creates explosive plays. 
 
 ```{r}
 explosive_EPA <- cfb_regular_play_2019 %>%
@@ -111,13 +113,15 @@ explosive_EPA %>%
     unnest
 ```
 
-So we can see that the 90th percentile EPA for rushes is 1.79 and the 90th percentile for passes is 2.45. We can then use that information to create a new binary variable for whether a play was explosive or not based based on EPA (not in code chunk so it doesn't run when knitted): 
+So we can see that the 90th percentile EPA for rushes is 1.79 and the 90th percentile for passes is 2.45. We can then use that information to create a new binary variable for whether a play was explosive or not based based on EPA: 
+
+```{r}
 cfb_regular_play_2019 %>%
     mutate(epa_explosive = if_else(rush == 1 & EPA >= 1.7917221, 1, 
                                  if_else(pass == 1 & EPA >= 2.4486338, 1, 0)))
+```
 
-
-Here's a chart that shows explosiveness rate on the x-axis and average EPA for only explosive plays on the y-axis. This essentially shows how often a team is explosive, and then when they're explosive, just *how* explosive they actually are. 
+Here's a chart that shows explosiveness rate on the x-axis and average EPA for only explosive plays on the y-axis. This chart shows how often a team is explosive, and then when they're explosive, just *how* explosive they actually are. 
 
 It's similar to the second chart above, but instead of looking at average EPA on all positive plays, it looks at average EPA on just explosive plays, allowing us to get an even better handle on the magnitude of a team's explosiveness when they are explosive. 
 
@@ -141,12 +145,5 @@ ggplot(data = season_stats_offense, aes(x = epa_sr, y = epa_er)) +
     labs(caption = "EPA model data from cfbscrapR, play-by-play data from @CFB_Data")+
     ggsave("epa_success_explosiveness.png", height = 9/1.2, width = 16/1.2)
 ```
-
-
-
-
-
-
-
 
 
