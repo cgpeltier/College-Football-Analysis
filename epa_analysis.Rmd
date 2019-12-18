@@ -18,11 +18,11 @@ library(cfbscrapR)
 library(ggimage)
 
 ##Pull season data from cfbscrapR
-cfb_regular_play_2019 <- data.frame()
+pbp_2019 <- data.frame()
 for(i in 1:15){
   model <- cfb_pbp_data(year = 2019, season_type = "both", week = i, epa_wpa = TRUE)
   df <- data.frame(model)
-  cfb_regular_play_2019 <- bind_rows(cfb_regular_play_2019, df)
+  pbp_2019 <- bind_rows(pbp_2019, df)
 }
 ```
 
@@ -34,7 +34,7 @@ First we'll adjust the pre-set rush and pass variables. While there is a "play_t
 Second, we'll also add a number of other new variables for things we might want to analyze later, including: stuffed run rate (the rate of runs stopped at or behind the line of scrimmage), opportunity rate (the percentage of rushes that gain 4 or more yards -- i.e. the plays that the offensive line "does its job"), epa_successes (creates a binary good/bad play variable based on whether EPA is positive or negative), short rush attempts/success (running plays with 2 or fewer yards to go), and standard/passing downs (down/distance combinations where a team could theoretically rush or pass, or situations where passing is much more likely). 
 
 ```{r}
-cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
+pbp_2019 <- pbp_2019 %>%
   rename(adjusted_yardline = adj_yd_line,
          offense = offense_play,
          defense = defense_play) %>%
@@ -101,12 +101,12 @@ Next we'll do some more cleaning, this time adding columns for running back, qua
 This section again uses the stringr package, but now incorporates regular expressions (regex) to pull out the player names from the "play_text" variable. As you can see below, the running back (RB) names were much simpler to extract than the other two position groups. QB and WR names followed multiple formats in the play_text variable, so we needed to use several conditional (ifelse) stringr:str_extract statements in order to capture all of the possible name formats.
 ```{r}
 # RB names 
-cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
+pbp_2019 <- pbp_2019 %>%
     mutate(rush_player = ifelse(rush == 1, str_extract(play_text, "(.{0,25} )run |(.{0,25} )\\d{0,2} Yd Run"), NA)) %>%
     mutate(rush_player = str_remove(rush_player, " run | \\d+ Yd Run"))
 
 # QB names 
-cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
+pbp_2019 <- pbp_2019 %>%
     mutate(pass_player = ifelse(pass==1, str_extract(play_text, "pass from (.*?) \\(|(.{0,30} )pass |(.{0,30} )sacked|(.{0,30} )incomplete "), NA)) %>%
     mutate(pass_player = str_remove(pass_player, "pass | sacked| incomplete")) %>%
     mutate(pass_player = if_else(play_type == "Passing Touchdown", str_extract(play_text, "from(.+)"), pass_player),
@@ -115,7 +115,7 @@ cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
           pass_player = str_remove(pass_player, " \\,"))
 
 # WR names
-cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
+pbp_2019 <- pbp_2019 %>%
     mutate(receiver_player = ifelse(pass==1, str_extract(play_text, "to (.+)"), NA)) %>%
     mutate(receiver_player = if_else(str_detect(play_text, "Yd pass"), str_extract(play_text, "(.+)\\d"), receiver_player)) %>%
     mutate(receiver_player = ifelse(play_type == "Sack", NA, receiver_player)) %>%
@@ -137,7 +137,7 @@ The percentiles ("summary_stat_p") are particularly helpful here, as they are mu
 Finally, below each season summary section we'll join the team logos data frame with the season summary stats data frames to use for charts later on. 
 ```{r}
 ## box score stats
-box_score_stats <- cfb_regular_play_2019 %>%
+box_score_stats <- pbp_2019 %>%
   group_by(offense, defense) %>%
   filter(rush == 1 | pass == 1) %>%
   summarize(
@@ -219,7 +219,7 @@ box_score_stats <- box_score_stats %>%
 
 
 ## new all season stats - offense
-season_stats_offense <- cfb_regular_play_2019 %>%
+season_stats_offense <- pbp_2019 %>%
   group_by(offense) %>%
   filter(rush == 1 | pass == 1) %>%
     summarize(
@@ -309,7 +309,7 @@ season_stats_offense <- season_stats_offense %>%
   filter(logo != is.na(logo))
 
 ## season stats - defense
-season_stats_defense <- cfb_regular_play_2019 %>%
+season_stats_defense <- pbp_2019 %>%
   group_by(defense) %>%
   filter(rush == 1 | pass == 1) %>%
   summarize(
@@ -401,7 +401,7 @@ season_stats_defense <- season_stats_defense %>%
 ### Creating summary data frames for skill players
 Next we can make data frames for each skill position -- RBs, QBs, and WRs: 
 ```{r}
-rusher_stats_19 <- cfb_regular_play_2019 %>%
+rusher_stats_19 <- pbp_2019 %>%
   group_by(offense, rush_player) %>%
   filter(rush_player != is.na(rush_player) & rush_player != "TEAM " & rush == 1 & (sum(rush) > 40)) %>%
   summarize(
@@ -410,7 +410,7 @@ rusher_stats_19 <- cfb_regular_play_2019 %>%
     plays = n()
   )%>% ungroup()
 
-receiver_stats_19 <- cfb_regular_play_2019 %>%
+receiver_stats_19 <- pbp_2019 %>%
   group_by(offense, receiver_player) %>%
   filter(receiver_player != is.na(receiver_player) & receiver_player != "TEAM" & pass == 1 & sum(pass) >= 10) %>%
   summarize(
@@ -419,7 +419,7 @@ receiver_stats_19 <- cfb_regular_play_2019 %>%
     plays = sum(pass)
   )%>% ungroup()
 
-passer_stats_19 <- cfb_regular_play_2019 %>%
+passer_stats_19 <- pbp_2019 %>%
   group_by(offense, pass_player) %>%
   filter(pass_player != is.na(pass_player) & pass_player != "TEAM" & pass == 1 & sum(pass) > 40) %>%
   summarize(
@@ -488,10 +488,10 @@ passer_stats_19 %>%
 This seems to be a solid list of the top-5 FBS quarterbacks. Jalen Hurts, Justin Fields, and Joe Burrow were three of the four players selected as Heisman Finalists this year. Tua Tagovailoa was on many lists until he got injured. Tanner Morgan is a little surprising in the fourth spot, but has produced a relatively large number of explosive plays for Minnesota. 
 
 ## Visualizing all plays per game 
-One final thing we can do is to visualize all plays for a specific team. Below is the EPA for every Ohio State play this season, separated by game, with box plots to show the distribution of EPA:
+One final thing we can do is to visualize all plays for a specific team. Below is the EPA for every Ohio State offensive play this season, separated by game, with box plots to show the distribution of EPA:
 
 ```{r}
-osu_plays <- cfb_regular_play_2019 %>%
+osu_plays <- pbp_2019 %>%
     filter(!is.na(rush_pass) & offense == "Ohio State") %>%
     mutate(defense = if_else(game_id == 401132983, "Wisconsin_2", defense))
 
@@ -509,5 +509,30 @@ ggsave("epa_game_osu.png", height = 9/1.2, width = 16/1.2)
 
 
 ```
+
+
+And here's the same for defenses:
+```{r}
+osu_plays_def <- pbp_2019 %>%
+    filter(!is.na(rush_pass) & defense == "Ohio State") %>%
+    mutate(offense = if_else(game_id == 401132983, "Wisconsin_2", offense))
+
+osu_plays_def$offense <- factor(osu_plays_def$offense, levels = c("Florida Atlantic", "Cincinnati", "Indiana",
+                                                      "Miami (OH)", "Nebraska", "Michigan State",
+                                                      "Northwestern", "Wisconsin", "Maryland",
+                                                      "Rutgers", "Penn State", "Michigan",
+                                                      "Wisconsin_2"))
+    
+
+ggplot(data = osu_plays_def, aes(x = offense, y = EPA)) + 
+    geom_boxplot() +
+    geom_jitter(shape = 16, position = position_jitter(0.2)) +
+ggsave("epa_game_osu_def.png", height = 9/1.2, width = 16/1.2)
+```
+
+
+
+
+
 
 

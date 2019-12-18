@@ -3,16 +3,16 @@ library(cfbscrapR)
 library(ggimage)
 
 ##Pull season data from cfbscrapR
-cfb_regular_play_2019 <- data.frame()
+pbp_2019 <- data.frame()
 for(i in 1:15){
   model <- cfb_pbp_data(year = 2019, season_type = "both", week = i, epa_wpa = TRUE)
   df <- data.frame(model)
-  cfb_regular_play_2019 <- bind_rows(cfb_regular_play_2019, df)
+  pbp_2019 <- bind_rows(pbp_2019, df)
 }
 
 
 ## Clean data
-cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
+pbp_2019 <- pbp_2019 %>%
   rename(adjusted_yardline = adj_yd_line,
          offense = offense_play,
          defense = defense_play) %>%
@@ -42,7 +42,8 @@ cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
                                   ifelse(down == 4 & distance < 5, 1, 0)))),
          pass.down = ifelse(down == 2 & distance > 8, 1, 
                             ifelse(down == 3 & distance > 5, 1, 
-                                   ifelse(down == 4 & distance > 5, 1, 0)))
+                                   ifelse(down == 4 & distance > 5, 1, 0))),
+         year = 2019
 )
   
 ## Add logos
@@ -68,12 +69,12 @@ teams_logo <- logo_team %>%
 
 ## Extract player names
 # RB names 
-cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
+pbp_2019 <- pbp_2019 %>%
     mutate(rush_player = ifelse(rush == 1, str_extract(play_text, "(.{0,25} )run |(.{0,25} )\\d{0,2} Yd Run"), NA)) %>%
     mutate(rush_player = str_remove(rush_player, " run | \\d+ Yd Run"))
 
 # QB names 
-cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
+pbp_2019 <- pbp_2019 %>%
     mutate(pass_player = ifelse(pass==1, str_extract(play_text, "pass from (.*?) \\(|(.{0,30} )pass |(.{0,30} )sacked|(.{0,30} )incomplete "), NA)) %>%
     mutate(pass_player = str_remove(pass_player, "pass | sacked| incomplete")) %>%
     mutate(pass_player = if_else(play_type == "Passing Touchdown", str_extract(play_text, "from(.+)"), pass_player),
@@ -82,7 +83,7 @@ cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
           pass_player = str_remove(pass_player, " \\,"))
 
 ## Receiver names
-cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
+pbp_2019 <- pbp_2019 %>%
     mutate(receiver_player = ifelse(pass==1, str_extract(play_text, "to (.+)"), NA)) %>%
     mutate(receiver_player = if_else(str_detect(play_text, "Yd pass"), str_extract(play_text, "(.+)\\d"), receiver_player)) %>%
     mutate(receiver_player = ifelse(play_type == "Sack", NA, receiver_player)) %>%
@@ -93,7 +94,7 @@ cfb_regular_play_2019 <- cfb_regular_play_2019 %>%
 
 
 ## box score stats
-box_score_stats <- cfb_regular_play_2019 %>%
+box_score_stats <- pbp_2019 %>%
   group_by(offense, defense) %>%
   filter(rush == 1 | pass == 1) %>%
   summarize(
@@ -175,7 +176,7 @@ box_score_stats <- box_score_stats %>%
 
 
 ## new all season stats - offense
-season_stats_offense <- cfb_regular_play_2019 %>%
+season_stats_offense <- pbp_2019 %>%
   group_by(offense) %>%
   filter(rush == 1 | pass == 1) %>%
     summarize(
@@ -265,7 +266,7 @@ season_stats_offense <- season_stats_offense %>%
   filter(logo != is.na(logo))
 
 ## season stats - defense
-season_stats_defense <- cfb_regular_play_2019 %>%
+season_stats_defense <- pbp_2019 %>%
   group_by(defense) %>%
   filter(rush == 1 | pass == 1) %>%
   summarize(
@@ -353,25 +354,9 @@ season_stats_defense <- season_stats_defense %>%
     left_join(teams_logo, by = "team") %>%
     filter(logo != is.na(logo))
 
-## national averages
-national_season_stats <- cfb_regular_play_2019 %>%
-  filter(rush == 1 | pass == 1) %>%
-  summarize(
-    avg_epa = mean(EPA, na.rm=TRUE),
-    epa_sr_rate = mean(epa_success, na.rm=TRUE),
-    avg_epa_rush = mean(EPA[rush == 1], na.rm=TRUE),
-    epa_sr_rate_rush = mean(epa_success[rush == 1], na.rm=TRUE),
-    short_rush_epa = mean(EPA[short_rush_attempt==1]),
-    avg_epa_pass = mean(EPA[pass == 1], na.rm=TRUE),
-    epa_sr_rate_pass = mean(epa_success[pass == 1], na.rm=TRUE),
-    avg_rz_epa = mean(EPA[rz_play == 1]),
-    avg_rz_epa_sr = mean(epa_success[rz_play == 1]),
-    std_down_epa = mean(EPA[std.down==1]),
-    pass_down_epa = mean(EPA[pass.down==1])
-  ) %>% ungroup()
 
 ## skill player stats
-rusher_stats_19 <- cfb_regular_play_2019 %>%
+rusher_stats_19 <- pbp_2019 %>%
   group_by(offense, rush_player) %>%
   filter(rush_player != is.na(rush_player) & rush_player != "TEAM " & rush == 1 & (sum(rush) > 40)) %>%
   summarize(
@@ -381,7 +366,7 @@ rusher_stats_19 <- cfb_regular_play_2019 %>%
     plays = n()
   )%>% ungroup()
 
-receiver_stats_19 <- cfb_regular_play_2019 %>%
+receiver_stats_19 <- pbp_2019 %>%
   group_by(offense, receiver_player) %>%
   filter(receiver_player != is.na(receiver_player) & receiver_player != "TEAM" & pass == 1 & sum(pass) >= 10) %>%
   summarize(
@@ -391,7 +376,7 @@ receiver_stats_19 <- cfb_regular_play_2019 %>%
     plays = sum(pass)
   )%>% ungroup()
 
-passer_stats_19 <- cfb_regular_play_2019 %>%
+passer_stats_19 <- pbp_2019 %>%
   group_by(offense, pass_player) %>%
   filter(pass_player != is.na(pass_player) & pass_player != "TEAM" & pass == 1 & sum(pass) > 40) %>%
   summarize(
@@ -423,6 +408,7 @@ season_epa <- season_epa %>%
 write.csv(box_score_stats, file = "box_score_stats.csv")
 write.csv(season_stats_offense, file = "season_stats_off.csv")
 write.csv(season_stats_defense, file = "season_stats_def.csv")
+write.csv(pbp_2019, file = "pbp_2019.csv")
 
 
 

@@ -26,7 +26,7 @@ library(tidyverse)
 library(cfbscrapR)
 library(ggimage)
 
-yards_gained <- cfb_regular_play_2019 %>%
+yards_gained <- pbp_2019 %>%
     mutate(rush_pass = if_else(rush == 1, "rush", if_else(pass == 1, "pass", "NA"))) %>%
     drop_na(rush_pass) %>%
     select(yards_gained, rush_pass)
@@ -41,7 +41,7 @@ yards_gained %>%
 As shown above, the 90th percentile of rushes went for >=12 yards, while the 90th percentile of passes went for >=20 yards. As a result, it would be simple to add a variable for "explosive_play" that uses that (somewhat artbitrary!) definition of the 90th percentile of yards_gained: 
 
 ```{r}
-exp_plays <- cfb_regular_play_2019 %>%
+exp_plays <- pbp_2019 %>%
     mutate(explosive_play = if_else(rush==1 & yards_gained >=12, 1,
                                     if_else(pass==1 & yards_gained >=20, 1, 0)))
 ```
@@ -100,7 +100,7 @@ Further, just looking at playoff teams, Ohio State and LSU are two of the three 
 Just like we did above the yards_gained variable, we can also calculate the 90th percentile EPAs for rushes and passes in order to create a new variable showing explosiveness rate. This will specify an EPA threshold for a play to be considered explosive, then see how often on average a team creates explosive plays. 
 
 ```{r}
-explosive_EPA <- cfb_regular_play_2019 %>%
+explosive_EPA <- pbp_2019 %>%
     mutate(rush_pass = if_else(rush == 1, "rush", 
                                if_else(pass == 1, "pass", "NA"))) %>%
     filter(rush_pass == "rush" | rush_pass == "pass") %>%
@@ -116,7 +116,7 @@ explosive_EPA %>%
 So we can see that the 90th percentile EPA for rushes is 1.79 and the 90th percentile for passes is 2.45. We can then use that information to create a new binary variable for whether a play was explosive or not based based on EPA: 
 
 ```{r}
-cfb_regular_play_2019 %>%
+pbp_2019 %>%
     mutate(epa_explosive = if_else(rush == 1 & EPA >= 1.7917221, 1, 
                                  if_else(pass == 1 & EPA >= 2.4486338, 1, 0)))
 ```
