@@ -27,6 +27,7 @@ Note that I use the "talent_test" data frame below for a list of all FBS teams. 
 Finally, roster data is only available for the 2019 season, so that's what we're testing here -- it's only a snapshot look at how players change positions.
 
 ```{r}
+talent_test <- read_csv("talent_test.csv")
 
 teams_for_rosters <- talent_test %>%
     distinct(team) 
@@ -68,6 +69,8 @@ While those are definite problems, this is more of an exploratory analysis. Assu
 Finally, this uses the "talent_data" data frame I created in the "Analysis of Talent and Production in College Football" project I mentioned previously. It was created using a for loop based on the cfb_recruiting function from cfbscrapR.
 
 ```{r}
+talent_data <- read_csv("talent_data.csv")
+
 all_rosters <- all_rosters %>%
     mutate(name = str_c(first_name, last_name, sep = " ")) %>%
     rename(position_team = position)
