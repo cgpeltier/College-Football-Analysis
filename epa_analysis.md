@@ -14,9 +14,38 @@ Expected points themselves are derived from a statistical model for each down, d
 
 ## Loading our dataset
 First, I loaded the three necessary packages and then wrote a simple for loop to create a data frame of PBP EPA data for the entire 2019 college football season. EPA data is courtesy of the cfbscrapR package.
-```{r}
+
+```r
 library(tidyverse)
+```
+
+```
+## -- Attaching packages ------------------------------------------------------------------- tidyverse 1.3.0 --
+```
+
+```
+## v ggplot2 3.2.1     v purrr   0.3.3
+## v tibble  2.1.3     v dplyr   0.8.3
+## v tidyr   1.0.0     v stringr 1.4.0
+## v readr   1.3.1     v forcats 0.4.0
+```
+
+```
+## -- Conflicts ---------------------------------------------------------------------- tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+```
+
+```r
 library(cfbscrapR)
+```
+
+```
+## Warning: replacing previous import 'mgcv::multinom' by 'nnet::multinom' when
+## loading 'cfbscrapR'
+```
+
+```r
 library(ggimage)
 
 ##Pull season data from cfbscrapR
@@ -35,7 +64,8 @@ First we'll adjust the pre-set rush and pass variables. While there is a "play_t
 
 Second, we'll also add a number of other new variables for things we might want to analyze later, including: stuffed run rate (the rate of runs stopped at or behind the line of scrimmage), opportunity rate (the percentage of rushes that gain 4 or more yards -- i.e. the plays that the offensive line "does its job"), epa_successes (creates a binary good/bad play variable based on whether EPA is positive or negative), short rush attempts/success (running plays with 2 or fewer yards to go), and standard/passing downs (down/distance combinations where a team could theoretically rush or pass, or situations where passing is much more likely). 
 
-```{r}
+
+```r
 pbp_2019 <- pbp_2019 %>%
   rename(adjusted_yardline = adj_yd_line,
          offense = offense_play,
@@ -76,11 +106,20 @@ Next we'll add a data frame for team logos that will be helpful for charts later
 This section will first read in the logo image file locations into a list. Next we'll extract the team name from the image file location using the stringr package. 
 
 However, because we have image files for all college football teams but we are only interested in teams at the FBS level, we'll need to filter out all of the non-FBS schools. To do that, we'll use a csv file of FBS teams (again courtesy of collegefootballdata.com) and use an inner join to filter out the teams that aren't on that list:
-```{r}
+
+```r
 logos_list <- as.data.frame(list.files("C:/Users/chad.peltier/OneDrive - IHS Markit/Desktop/CFB/logos", pattern = "*.png", full.names = TRUE)) 
 colnames(logos_list)[1] <- "logo"
 
 logo_team <- as_tibble(str_split(logos_list$log, "C:/Users/chad.peltier/OneDrive - IHS Markit/Desktop/CFB/logos", simplify = TRUE))
+```
+
+```
+## Warning: `as_tibble.matrix()` requires a matrix with column names or a `.name_repair` argument. Using compatibility `.name_repair`.
+## This warning is displayed once per session.
+```
+
+```r
 logo_team <- logo_team %>% 
     mutate(team = str_replace(V2, ".png", ""),
            team = str_replace(team, "/", "")) %>%
@@ -89,6 +128,28 @@ logo_team <- logo_team %>%
 logo_team <- cbind(logo_team, logos_list)
 
 teams <- read_csv("teams.csv")
+```
+
+```
+## Parsed with column specification:
+## cols(
+##   id = col_double(),
+##   school = col_character(),
+##   mascot = col_character(),
+##   abbreviation = col_character(),
+##   alt_name1 = col_character(),
+##   alt_name2 = col_character(),
+##   alt_name3 = col_character(),
+##   conference = col_character(),
+##   division = col_character(),
+##   color = col_character(),
+##   alt_color = col_character(),
+##   `logos[0]` = col_character(),
+##   `logos[1]` = col_character()
+## )
+```
+
+```r
 teams <- teams %>%
     rename(team = school)
 
@@ -101,7 +162,8 @@ teams_logo <- logo_team %>%
 Next we'll do some more cleaning, this time adding columns for running back, quarterback, and wide receiver player names. That will allow us to calculate EPA data for individual players and for position groups as a whole. 
 
 This section again uses the stringr package, but now incorporates regular expressions (regex) to pull out the player names from the "play_text" variable. As you can see below, the running back (RB) names were much simpler to extract than the other two position groups. QB and WR names followed multiple formats in the play_text variable, so we needed to use several conditional (ifelse) stringr:str_extract statements in order to capture all of the possible name formats.
-```{r}
+
+```r
 # RB names 
 pbp_2019 <- pbp_2019 %>%
     mutate(rush_player = ifelse(rush == 1, str_extract(play_text, "(.{0,25} )run |(.{0,25} )\\d{0,2} Yd Run"), NA)) %>%
@@ -137,7 +199,8 @@ Each data frame calculates a number of summary stats, including average EPA per 
 The percentiles ("summary_stat_p") are particularly helpful here, as they are much easier to understand than even the number of standard deviations a team is from the mean of that statistic. You can essentially interpret these percentiles as "the probability that a random team has an EPA statistic lower than this." For example, Alabama's average offensive EPA percentile is 98.2%, meaning that a randomly selected team has a 98.2% probability of having an average offensive EPA lower than Alabama.
 
 Finally, below each season summary section we'll join the team logos data frame with the season summary stats data frames to use for charts later on. 
-```{r}
+
+```r
 ## box score stats
 box_score_stats <- pbp_2019 %>%
   group_by(offense, defense) %>%
@@ -402,7 +465,8 @@ season_stats_defense <- season_stats_defense %>%
 
 ### Creating summary data frames for skill players
 Next we can make data frames for each skill position -- RBs, QBs, and WRs: 
-```{r}
+
+```r
 rusher_stats_19 <- pbp_2019 %>%
   group_by(offense, rush_player) %>%
   filter(rush_player != is.na(rush_player) & rush_player != "TEAM " & rush == 1 & (sum(rush) > 40)) %>%
@@ -433,7 +497,8 @@ passer_stats_19 <- pbp_2019 %>%
 
 ## Charting team summary data
 We can make a data frame that combines offense and defense season average EPA and EPA success rates for all teams. This adds in logos and will be important for making basic FBS team summary charts. 
-```{r}
+
+```r
 season_off_epa <- season_stats_offense %>%
     select(1,4,7) 
 season_def_epa <- season_stats_defense %>%
@@ -453,7 +518,8 @@ season_epa <- as_tibble(season_epa)
 
 Using the data frame we made in the code block above, we can then easily make a summary chart that shows all FBS teams plotted by their offensive and defensive EPA percentiles. 
 
-```{r}
+
+```r
 ggplot(data = season_epa, aes(x = avg_epa_p_off, y = avg_epa_p_def)) +
     geom_image(aes(image = logo), size = .03, by = "width", asp = 1.8) +
     xlab("Offensive EPA per play") +
@@ -461,38 +527,77 @@ ggplot(data = season_epa, aes(x = avg_epa_p_off, y = avg_epa_p_def)) +
     labs(caption = "Chart by Chad Peltier, EPA data from cfbscrapR, PBP data from @CFB_Data") +    ggsave("epa_off_def.png", height = 9/1.2, width = 16/1.2)
 ```
 
+![](epa_analysis_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
 ## Top teams and players by average EPA
 A few more things we can do with this data. First, here are the top 5 offenses: 
-```{r}
+
+```r
 season_epa %>%
     arrange(desc(as.numeric(avg_epa_p_off))) %>%
     select(team, avg_epa_p_off) %>%
     head(5)
 ```
 
+```
+## # A tibble: 5 x 2
+##   team       avg_epa_p_off[,1]
+##   <chr>                  <dbl>
+## 1 Alabama                0.982
+## 2 LSU                    0.981
+## 3 Oklahoma               0.975
+## 4 Ohio State             0.970
+## 5 Clemson                0.961
+```
+
 And defenses: 
-```{r}
+
+```r
 season_epa %>%
     arrange(desc(as.numeric(avg_epa_p_def))) %>%
     select(team, avg_epa_p_def) %>%
     head(5)
+```
+
+```
+## # A tibble: 5 x 2
+##   team            avg_epa_p_def[,1]
+##   <chr>                       <dbl>
+## 1 Clemson                     0.980
+## 2 Ohio State                  0.969
+## 3 Georgia                     0.933
+## 4 San Diego State             0.924
+## 5 UAB                         0.917
 ```
 The first five offenses fit well with what we would expect based on other sources, such as the SP+ rankings. But for defensive EPA, while Clemson, Ohio State and Georgia also rank highly in other metrics, San Diego State and UAB only rank 17th and 28th respectively in the opponent-adjusted defensive SP+ ratings. That *could* suggest that opponent-adjusted EPA data would produce different results. 
 
 Of course, we can't generalize the effectiveness of average EPA only by the top 5 results, but they are interesting nevertheless! 
 
 Let's take a look at our top-5 quarterbacks, too: 
-```{r}
+
+```r
 passer_stats_19 %>%
     arrange(desc(avg_epa)) %>%
     head(5)
+```
+
+```
+## # A tibble: 5 x 5
+##   offense    pass_player       passes avg_epa epa_sr
+##   <chr>      <chr>              <dbl>   <dbl>  <dbl>
+## 1 Oklahoma   "Jalen Hurts "       287   0.493  0.502
+## 2 Alabama    "Tua Tagovailoa "    237   0.458  0.439
+## 3 Ohio State "Justin Fields "     275   0.412  0.447
+## 4 Minnesota  "Tanner Morgan "     265   0.388  0.449
+## 5 LSU        "Joe Burrow "        407   0.337  0.459
 ```
 This seems to be a solid list of the top-5 FBS quarterbacks. Jalen Hurts, Justin Fields, and Joe Burrow were three of the four players selected as Heisman Finalists this year. Tua Tagovailoa was on many lists until he got injured. Tanner Morgan is a little surprising in the fourth spot, but has produced a relatively large number of explosive plays for Minnesota. 
 
 ## Visualizing all plays per game 
 One final thing we can do is to visualize all plays for a specific team. Below is the EPA for every Ohio State offensive play this season, separated by game, with box plots to show the distribution of EPA:
 
-```{r}
+
+```r
 osu_plays <- pbp_2019 %>%
     filter(!is.na(rush_pass) & offense == "Ohio State") %>%
     mutate(defense = if_else(game_id == 401132983, "Wisconsin_2", defense))
@@ -508,13 +613,14 @@ ggplot(data = osu_plays, aes(x = defense, y = EPA)) +
     geom_boxplot() +
     geom_jitter(shape = 16, position = position_jitter(0.2)) +
 ggsave("epa_game_osu.png", height = 9/1.2, width = 16/1.2)
-
-
 ```
+
+![](epa_analysis_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 
 And here's the same for defenses:
-```{r}
+
+```r
 osu_plays_def <- pbp_2019 %>%
     filter(!is.na(rush_pass) & defense == "Ohio State") %>%
     mutate(offense = if_else(game_id == 401132983, "Wisconsin_2", offense))
@@ -531,6 +637,8 @@ ggplot(data = osu_plays_def, aes(x = offense, y = EPA)) +
     geom_jitter(shape = 16, position = position_jitter(0.2)) +
 ggsave("epa_game_osu_def.png", height = 9/1.2, width = 16/1.2)
 ```
+
+![](epa_analysis_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 
 
