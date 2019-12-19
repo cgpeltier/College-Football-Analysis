@@ -125,7 +125,7 @@ p1 <- ggplot(data = talent_test, aes(x = talent, y = rating)) +
     ggtitle("Average Recruiting and SP+ Performance, 2015-2019") +
     theme_minimal() +
     theme(plot.title = element_text(size = 10)) + 
-    geom_text(x=.88, y=-30, label="Adj R-squared = .54", size = 3)
+    geom_text(x=.88, y=-30, label="Adj R-squared = .54", size = 3)+
     ggsave("talent_sp.png", height = 9/1.2, width = 16/1.2)
 
 p1
@@ -328,7 +328,6 @@ patchwork <- plot_layout(p1 + p2 + p3 + p4)
 
 patchwork
 
-patchwork 
 ggsave("talent_tests.png", height = 9/1.2, width = 16/1.2)
 
 ```
@@ -467,14 +466,14 @@ qb_tal <- qb %>%
 model_qb <- lm(best_year ~ rating, data = qb_tal)
 summary(model_qb)
 
-ggplot(data = qb_tal, aes(x = rating, y = best_year)) + 
+p5 <- ggplot(data = qb_tal, aes(x = rating, y = best_year)) + 
     geom_point() + 
     geom_smooth(method = lm) +
-    labs(caption = "Chart by Chad Peltier.
-         Data from cfbscrapR and @CFB_Data.") +
     ggtitle("QB Recruiting Rating and Avg EPA, 2015-2019") +
     theme_minimal() +
     ggsave("talent_qb_epa.png", height = 9/1.2, width = 16/1.2)
+
+p5
 
 ```
 
@@ -512,16 +511,14 @@ wr_tal <- wr %>%
 model_wr <- lm(best_year ~ rating, data = wr_tal)
 summary(model_wr)
 
-ggplot(data = wr_tal, aes(x = rating, y = best_year)) + 
+p6 <- ggplot(data = wr_tal, aes(x = rating, y = best_year)) + 
     geom_point() + 
     geom_smooth(method = lm) +
-    labs(caption = "Chart by Chad Peltier.
-         Data from cfbscrapR and @CFB_Data.") +
     ggtitle("WR Recruiting Rating and Avg EPA, 2015-2019") +
     theme_minimal() +
     ggsave("talent_wr_epa.png", height = 9/1.2, width = 16/1.2)
 
-
+p6
 
 
 ```
@@ -557,7 +554,7 @@ rb_tal <- rb %>%
 model_rb <- lm(best_year ~ rating, data = rb_tal)
 summary(model_rb)
 
-ggplot(data = rb_tal, aes(x = rating, y = best_year)) + 
+p7 <- ggplot(data = rb_tal, aes(x = rating, y = best_year)) + 
     geom_point() + 
     geom_smooth(method = lm) +
   labs(caption = "Chart by Chad Peltier.
@@ -566,9 +563,22 @@ ggplot(data = rb_tal, aes(x = rating, y = best_year)) +
     theme_minimal() +
     ggsave("talent_rb_EPA.png", height = 9/1.2, width = 16/1.2)
 
+p7 
 ```
 
 Like with quarterbacks, there is a weak relationship between recruiting ratings and performance in your best year as measured by average EPA. 
+
+
+```{r}
+player_patchwork <- p5 / p6 / p7
+player_patchwork 
+ggsave("player_epa.png", height = 14/1.2, width = 16/1.2)
+
+```
+
+
+
+
 
 
 
