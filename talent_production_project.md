@@ -29,35 +29,7 @@ First we'll go ahead and read in the SP+ data between 2015-2019. This method use
 
 ```r
 library(tidyverse)
-```
-
-```
-## -- Attaching packages ------------------------------------------------------------------- tidyverse 1.3.0 --
-```
-
-```
-## v ggplot2 3.2.1     v purrr   0.3.3
-## v tibble  2.1.3     v dplyr   0.8.3
-## v tidyr   1.0.0     v stringr 1.4.0
-## v readr   1.3.1     v forcats 0.4.0
-```
-
-```
-## -- Conflicts ---------------------------------------------------------------------- tidyverse_conflicts() --
-## x dplyr::filter() masks stats::filter()
-## x dplyr::lag()    masks stats::lag()
-```
-
-```r
 library(cfbscrapR)
-```
-
-```
-## Warning: replacing previous import 'mgcv::multinom' by 'nnet::multinom' when
-## loading 'cfbscrapR'
-```
-
-```r
 library(forecast)
 ```
 
@@ -307,7 +279,7 @@ p1 <- ggplot(data = talent_test, aes(x = talent, y = rating)) +
     ggtitle("Average Recruiting and SP+ Performance, 2015-2019") +
     theme_minimal() +
     theme(plot.title = element_text(size = 10)) + 
-    geom_text(x=.88, y=-30, label="Adj R-squared = .54", size = 3)
+    geom_text(x=.88, y=-30, label="Adj R-squared = .54", size = 3)+
     ggsave("talent_sp.png", height = 9/1.2, width = 16/1.2)
 
 p1
@@ -714,43 +686,6 @@ patchwork
 ```
 
 ```r
-patchwork 
-```
-
-```
-## $ncol
-```
-
-![](talent_production_project_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
-
-```
-## 
-## $nrow
-## NULL
-## 
-## $byrow
-## NULL
-## 
-## $widths
-## NULL
-## 
-## $heights
-## NULL
-## 
-## $guides
-## NULL
-## 
-## $tag_level
-## NULL
-## 
-## $design
-## NULL
-## 
-## attr(,"class")
-## [1] "plot_layout"
-```
-
-```r
 ggsave("talent_tests.png", height = 9/1.2, width = 16/1.2)
 ```
 
@@ -903,29 +838,29 @@ summary(model_qb)
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
-## -0.55844 -0.10791  0.00609  0.11221  0.44813 
+## -0.55809 -0.10495  0.00772  0.10901  0.44875 
 ## 
 ## Coefficients:
 ##             Estimate Std. Error t value Pr(>|t|)    
-## (Intercept)  -0.4158     0.1084  -3.837 0.000146 ***
-## rating        0.3939     0.1261   3.125 0.001917 ** 
+## (Intercept)  -0.4060     0.1079  -3.762 0.000195 ***
+## rating        0.3814     0.1256   3.038 0.002545 ** 
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 0.1583 on 382 degrees of freedom
-## Multiple R-squared:  0.02492,	Adjusted R-squared:  0.02237 
-## F-statistic: 9.763 on 1 and 382 DF,  p-value: 0.001917
+## Residual standard error: 0.1576 on 382 degrees of freedom
+## Multiple R-squared:  0.02359,	Adjusted R-squared:  0.02104 
+## F-statistic:  9.23 on 1 and 382 DF,  p-value: 0.002545
 ```
 
 ```r
-ggplot(data = qb_tal, aes(x = rating, y = best_year)) + 
+p5 <- ggplot(data = qb_tal, aes(x = rating, y = best_year)) + 
     geom_point() + 
     geom_smooth(method = lm) +
-    labs(caption = "Chart by Chad Peltier.
-         Data from cfbscrapR and @CFB_Data.") +
     ggtitle("QB Recruiting Rating and Avg EPA, 2015-2019") +
     theme_minimal() +
     ggsave("talent_qb_epa.png", height = 9/1.2, width = 16/1.2)
+
+p5
 ```
 
 ![](talent_production_project_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
@@ -972,30 +907,30 @@ summary(model_wr)
 ## lm(formula = best_year ~ rating, data = wr_tal)
 ## 
 ## Residuals:
-##     Min      1Q  Median      3Q     Max 
-## -1.3841 -0.2164  0.0100  0.2193  1.1961 
+##      Min       1Q   Median       3Q      Max 
+## -1.38422 -0.21679  0.01211  0.22134  1.19577 
 ## 
 ## Coefficients:
 ##             Estimate Std. Error t value Pr(>|t|)   
-## (Intercept)   0.2784     0.1048   2.656  0.00799 **
-## rating        0.1792     0.1238   1.447  0.14802   
+## (Intercept)   0.2857     0.1047   2.728  0.00643 **
+## rating        0.1702     0.1237   1.376  0.16886   
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 0.3329 on 1741 degrees of freedom
-## Multiple R-squared:  0.001202,	Adjusted R-squared:  0.0006278 
-## F-statistic: 2.094 on 1 and 1741 DF,  p-value: 0.148
+## Residual standard error: 0.3335 on 1752 degrees of freedom
+## Multiple R-squared:  0.00108,	Adjusted R-squared:  0.0005101 
+## F-statistic: 1.895 on 1 and 1752 DF,  p-value: 0.1689
 ```
 
 ```r
-ggplot(data = wr_tal, aes(x = rating, y = best_year)) + 
+p6 <- ggplot(data = wr_tal, aes(x = rating, y = best_year)) + 
     geom_point() + 
     geom_smooth(method = lm) +
-    labs(caption = "Chart by Chad Peltier.
-         Data from cfbscrapR and @CFB_Data.") +
     ggtitle("WR Recruiting Rating and Avg EPA, 2015-2019") +
     theme_minimal() +
     ggsave("talent_wr_epa.png", height = 9/1.2, width = 16/1.2)
+
+p6
 ```
 
 ![](talent_production_project_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
@@ -1040,22 +975,22 @@ summary(model_rb)
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
-## -0.54620 -0.09641 -0.00982  0.08407  0.54865 
+## -0.54567 -0.09229 -0.00906  0.08168  0.54889 
 ## 
 ## Coefficients:
 ##             Estimate Std. Error t value Pr(>|t|)   
-## (Intercept)  -0.2917     0.0973  -2.998  0.00288 **
-## rating        0.3767     0.1145   3.290  0.00108 **
+## (Intercept) -0.28930    0.09704  -2.981  0.00303 **
+## rating       0.37335    0.11419   3.270  0.00116 **
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 0.1573 on 422 degrees of freedom
-## Multiple R-squared:  0.02501,	Adjusted R-squared:  0.0227 
-## F-statistic: 10.83 on 1 and 422 DF,  p-value: 0.001084
+## Residual standard error: 0.1576 on 427 degrees of freedom
+## Multiple R-squared:  0.02442,	Adjusted R-squared:  0.02214 
+## F-statistic: 10.69 on 1 and 427 DF,  p-value: 0.001164
 ```
 
 ```r
-ggplot(data = rb_tal, aes(x = rating, y = best_year)) + 
+p7 <- ggplot(data = rb_tal, aes(x = rating, y = best_year)) + 
     geom_point() + 
     geom_smooth(method = lm) +
   labs(caption = "Chart by Chad Peltier.
@@ -1063,11 +998,30 @@ ggplot(data = rb_tal, aes(x = rating, y = best_year)) +
     ggtitle("RB Recruiting Rating and Avg EPA, 2015-2019") +
     theme_minimal() +
     ggsave("talent_rb_EPA.png", height = 9/1.2, width = 16/1.2)
+
+p7 
 ```
 
 ![](talent_production_project_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 Like with quarterbacks, there is a weak relationship between recruiting ratings and performance in your best year as measured by average EPA. 
+
+
+
+```r
+player_patchwork <- p5 / p6 / p7
+player_patchwork 
+```
+
+![](talent_production_project_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+
+```r
+ggsave("player_epa.png", height = 14/1.2, width = 16/1.2)
+```
+
+
+
+
 
 
 
